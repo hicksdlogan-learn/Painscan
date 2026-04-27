@@ -1,0 +1,22 @@
+{
+  "name": "painscan",
+  "version": "1.0.0",
+  "description": "AI-powered customer pain point extractor — $7/report",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "monitor": "node automation/run-all.js",
+    "leads": "node automation/reddit-monitor.js"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0",
+    "stripe": "^16.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

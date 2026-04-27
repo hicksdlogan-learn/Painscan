@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PainScan — Customer Research in 60 Seconds</title>
+  <meta name="description" content="Paste Reddit threads, reviews, or forum posts. Get structured pain point analysis in 60 seconds. $7 per report." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            display: ['Space Grotesk', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ink: { 50: '#fafafa', 100: '#f5f5f5', 200: '#e5e5e5', 300: '#d4d4d4', 400: '#a3a3a3', 500: '#737373', 600: '#525252', 700: '#404040', 800: '#262626', 900: '#171717', 950: '#0a0a0a' },
+            scan: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *::selection { background: #fdba74; color: #171717; }
+    body { background: #fafafa; color: #171717; }
+    .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+    .bg-grid { background-image: linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px); background-size: 40px 40px; }
+    .scan-line { position: relative; overflow: hidden; }
+    .scan-line::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #f97316, transparent); animation: scan 2s ease-in-out infinite; }
+    @keyframes scan { 0%, 100% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
+    .btn-primary { background: #171717; color: white; transition: all 0.15s ease; }
+    .btn-primary:hover { background: #262626; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary { background: white; color: #171717; border: 1px solid #e5e5e5; transition: all 0.15s ease; }
+    .btn-secondary:hover { border-color: #d4d4d4; background: #fafafa; }
+    textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { border-color: #d4d4d4; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .spinner { width: 18px; height: 18px; border: 2px solid #e5e5e5; border-top-color: #171717; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .blurred { filter: blur(4px); user-select: none; pointer-events: none; }
+    .severity-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .severity-high { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+    .severity-medium { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
+    .severity-low { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen">
+  <div class="fixed inset-0 bg-grid opacity-40 pointer-events-none"></div>
+  
+  <nav class="relative border-b border-ink-200 px-6 py-4 bg-white/80 backdrop-blur-sm">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#171717"/><path d="M8 14h12M14 8v12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="font-display font-bold text-lg tracking-tight">PainScan</span>
+      </a>
+      <div class="flex items-center gap-4">
+        <span class="text-ink-500 text-sm hidden sm:block">$7 per report</span>
+        <a href="#tool" class="btn-primary text-sm font-medium px-4 py-2 rounded-lg">Try Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="relative max-w-5xl mx-auto px-6 pt-16 pb-12">
+    <div class="text-center max-w-3xl mx-auto">
+      <p class="text-scan-600 text-sm font-medium tracking-wide uppercase mb-4">Customer Research Tool</p>
+      <h1 class="font-display text-4xl sm:text-5xl font-bold text-ink-900 leading-tight mb-5">Find what your customers<br/>are actually saying.</h1>
+      <p class="text-lg text-ink-600 max-w-2xl mx-auto mb-8 leading-relaxed">Paste Reddit threads, Amazon reviews, or forum posts. Get structured pain point analysis with copywriting hooks and product angles — in 60 seconds.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a href="#tool" class="btn-primary px-6 py-3 rounded-lg font-medium text-base">Try Free Preview</a>
+        <span class="text-ink-400 text-sm">No signup required</span>
+      </div>
+    </div>
+    <div class="mt-12 flex flex-wrap justify-center gap-8 text-center">
+      <div><p class="font-display text-3xl font-bold text-ink-900">60s</p><p class="text-ink-500 text-sm">vs. hours of reading</p></div>
+      <div><p class="font-display text-3xl font-bold text-ink-900">10+</p><p class="text-ink-500 text-sm">pain points surfaced</p></div>
+      <div><p class="font-display text-3xl font-bold text-ink-900">$7</p><p class="text-ink-500 text-sm">one-time, no subscription</p></div>
+    </div>
+  </section>
+
+  <section id="tool" class="relative max-w-3xl mx-auto px-6 pb-16">
+    <div class="bg-white border border-ink-200 rounded-2xl shadow-sm overflow-hidden">
+      <div class="border-b border-ink-100 px-6 py-4 flex items-center justify-between bg-ink-50/50">
+        <div class="flex items-center gap-3">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="text-scan-600"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <h2 class="font-display font-semibold text-ink-900">Analyze Customer Text</h2>
+        </div>
+        <span class="text-xs bg-white border border-ink-200 text-ink-600 px-3 py-1 rounded-full">Free preview • Full report $7</span>
+      </div>
+      <div class="p-6">
+        <div id="input-section">
+          <label class="block text-sm text-ink-600 mb-2">Paste text from Reddit, reviews, forums, or anywhere</label>
+          <textarea id="text-input" rows="6" class="w-full bg-white border border-ink-200 rounded-xl p-4 text-ink-800 text-sm resize-none placeholder-ink-400" placeholder="Example: I've been using this software for 3 months. The export feature crashes constantly and support takes days to respond..."></textarea>
+          <div class="flex items-center justify-between mt-4">
+            <span id="char-count" class="text-xs text-ink-400">0 characters</span>
+            <button id="preview-btn" onclick="runPreview()" class="btn-primary px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" class="text-white"><path d="M10 2v16M2 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              Get Preview
+            </button>
+          </div>
+          <p class="text-xs text-ink-400 mt-3">Preview shows 3 pain points free. Unlock full report for $7.</p>
+        </div>
+
+        <div id="loading-section" class="hidden text-center py-12">
+          <div class="scan-line relative w-full h-32 bg-ink-50 rounded-xl mb-4 overflow-hidden">
+            <div class="absolute inset-0 flex items-center justify-center"><div class="spinner"></div></div>
+          </div>
+          <p class="text-ink-600 text-sm font-medium">Scanning for pain points...</p>
+          <p class="text-ink-400 text-xs mt-1">Usually takes 5–10 seconds</p>
+        </div>
+
+        <div id="results-section" class="hidden fade-in">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display font-semibold text-ink-900">Preview Report</h3>
+            <button onclick="resetTool()" class="text-xs text-ink-400 hover:text-ink-600">← Start over</button>
+          </div>
+          <div id="summary-box" class="bg-ink-50 border border-ink-100 rounded-xl p-4 mb-5 text-sm text-ink-700"></div>
+          <div class="mb-4">
+            <p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-3">Top Pain Points</p>
+            <div id="pain-points-list" class="space-y-3"></div>
+          </div>
+          <div id="locked-section" class="mt-6 border border-dashed border-ink-300 rounded-xl p-5 text-center bg-ink-50/50">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" class="mx-auto mb-3 text-ink-400"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="16" r="1" fill="currentColor"/><path d="M8 11V7a4 4 0 118 0v4" stroke="currentColor" stroke-width="1.5"/></svg>
+            <p class="font-display font-semibold text-ink-900 mb-1">Full Report Locked</p>
+            <p class="text-sm text-ink-500 mb-4">Unlock 10+ pain points, emotional triggers, jobs-to-be-done, copywriting hooks, and product angles.</p>
+            <div class="blurred bg-white border border-ink-200 rounded-lg p-3 mb-4 text-left text-sm text-ink-600 space-y-2">
+              <p><strong>Emotional trigger:</strong> Fear of wasted time and looking incompetent</p>
+              <p><strong>Job-to-be-done:</strong> Help me look like I know what I'm doing, fast</p>
+              <p><strong>Copywriting hook:</strong> "Stop losing hours to [X]. Solve it in 60 seconds."</p>
+            </div>
+            <button id="unlock-btn" onclick="unlockFullReport()" class="btn-primary w-full py-3 rounded-lg font-medium">Unlock Full Report — $7</button>
+            <p class="text-xs text-ink-400 mt-2">One-time payment • 30-day refund guarantee</p>
+          </div>
+        </div>
+
+        <div id="success-section" class="hidden fade-in text-center py-8">
+          <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-green-600"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3 class="font-display font-semibold text-ink-900 mb-1">Payment confirmed</h3>
+          <p class="text-ink-500 text-sm">Generating your full report...</p>
+          <div class="spinner mx-auto mt-4"></div>
+        </div>
+
+        <div id="full-report-section" class="hidden fade-in">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="font-display font-semibold text-lg text-ink-900">Full Report</h3>
+            <div class="flex gap-2">
+              <button onclick="copyReport()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg flex items-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                Copy
+              </button>
+              <button onclick="downloadReport()" class="btn-primary text-xs px-3 py-1.5 rounded-lg">Download</button>
+            </div>
+          </div>
+          <div id="full-report-content" class="space-y-4 text-sm text-ink-700"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-6 pb-16">
+    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-10">How it works</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
+        <div class="w-10 h-10 bg-ink-900 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">1</span></div>
+        <h3 class="font-display font-semibold text-ink-900 mb-2">Paste your text</h3>
+        <p class="text-ink-500 text-sm">Reddit threads, Amazon reviews, forum posts, support tickets — anything with customer language.</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
+        <div class="w-10 h-10 bg-ink-900 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">2</span></div>
+        <h3 class="font-display font-semibold text-ink-900 mb-2">Get free preview</h3>
+        <p class="text-ink-500 text-sm">See your top 3 pain points instantly. No account, no card, no friction.</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
+        <div class="w-10 h-10 bg-scan-500 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">3</span></div>
+        <h3 class="font-display font-semibold text-ink-900 mb-2">Unlock insights</h3>
+        <p class="text-ink-500 text-sm">$7 unlocks the full report: copy hooks, emotional triggers, jobs-to-be-done, and product angles.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-5xl mx-auto px-6 pb-16">
+    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-10">Who uses PainScan</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <p class="font-display font-semibold text-ink-900 mb-1">Etsy Sellers</p>
+        <p class="text-ink-500 text-sm">Scan competitor reviews to find product gaps and write better listings.</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <p class="font-display font-semibold text-ink-900 mb-1">Indie Founders</p>
+        <p class="text-ink-500 text-sm">Validate problems before building. Find the exact words customers use.</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <p class="font-display font-semibold text-ink-900 mb-1">Copywriters</p>
+        <p class="text-ink-500 text-sm">Extract "voice of customer" gold for ads, emails, and landing pages.</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <p class="font-display font-semibold text-ink-900 mb-1">Product Teams</p>
+        <p class="text-ink-500 text-sm">Process hundreds of support tickets and reviews in seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-6 pb-16">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+        <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Scanned 3 months of Etsy reviews in 30 seconds. Found the exact feature gap my competitor was missing."</p>
+        <p class="text-ink-400 text-xs">— Beta tester, Etsy seller</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+        <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Used to spend 4+ hours on customer research. Now I paste reviews and get hooks in seconds."</p>
+        <p class="text-ink-400 text-xs">— Early user, freelance copywriter</p>
+      </div>
+      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+        <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Ran our 6-month support thread through PainScan before a roadmap meeting. Surfaced patterns we missed."</p>
+        <p class="text-ink-400 text-xs">— Beta tester, startup PM</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-2xl mx-auto px-6 pb-16">
+    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-8">FAQ</h2>
+    <div class="space-y-3">
+      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
+          <span class="font-medium text-ink-900 text-sm">What text can I paste in?</span>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-4 pb-4 text-sm text-ink-600">Anything with human language: Reddit threads, Amazon reviews, Trustpilot, G2, Twitter threads, forum posts, Discord transcripts, support tickets, survey responses. The more text, the better the analysis.</div>
+      </details>
+      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
+          <span class="font-medium text-ink-900 text-sm">What's in the full $7 report?</span>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-4 pb-4 text-sm text-ink-600">10+ ranked pain points, emotional triggers, jobs-to-be-done analysis, copywriting hooks (ready to use), competitor gaps, and suggested product/content angles.</div>
+      </details>
+      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
+          <span class="font-medium text-ink-900 text-sm">How is this different from ChatGPT?</span>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-4 pb-4 text-sm text-ink-600">PainScan uses a specialized framework built for customer research. You get structured, consistent, actionable output — not a wall of text to re-interpret. Plus it's faster than crafting the right prompt yourself.</div>
+      </details>
+      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
+          <span class="font-medium text-ink-900 text-sm">What's your refund policy?</span>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="px-4 pb-4 text-sm text-ink-600">30-day money-back guarantee, no questions asked. Email hello@painscan.fyi and you'll be refunded within 24 hours.</div>
+      </details>
+    </div>
+  </section>
+
+  <section class="border-t border-ink-200 py-16 bg-ink-50/50">
+    <div class="max-w-2xl mx-auto px-6 text-center">
+      <h2 class="font-display text-3xl font-bold text-ink-900 mb-3">Stop guessing. Start knowing.</h2>
+      <p class="text-ink-500 mb-6">Your next product insight is one paste away.</p>
+      <a href="#tool" class="btn-primary px-8 py-3 rounded-lg font-medium inline-block">Try Free Preview</a>
+    </div>
+  </section>
+
+  <footer class="border-t border-ink-200 py-8 bg-white">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#171717"/><path d="M8 14h12M14 8v12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          <span class="font-display font-semibold text-ink-900">PainScan</span>
+        </div>
+        <div class="flex items-center gap-6 text-sm text-ink-500">
+          <a href="mailto:hello@painscan.fyi" class="hover:text-ink-700">hello@painscan.fyi</a>
+          <span>© 2025</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const textInput = document.getElementById('text-input');
+    const charCount = document.getElementById('char-count');
+    textInput.addEventListener('input', () => {
+      const len = textInput.value.length;
+      charCount.textContent = len.toLocaleString() + ' characters';
+      charCount.className = len > 200 ? 'text-xs text-scan-600' : 'text-xs text-ink-400';
+    });
+
+    let previewData = null, fullReportData = null;
+
+    async function runPreview() {
+      const text = textInput.value.trim();
+      if (text.length < 100) { alert('Please paste at least 100 characters for a meaningful analysis.'); return; }
+      sessionStorage.setItem('painscan_text', text);
+      document.getElementById('input-section').classList.add('hidden');
+      document.getElementById('loading-section').classList.remove('hidden');
+      try {
+        const response = await fetch('/api/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+        if (!response.ok) throw new Error('API error');
+        const data = await response.json();
+        previewData = data;
+        document.getElementById('loading-section').classList.add('hidden');
+        document.getElementById('results-section').classList.remove('hidden');
+        document.getElementById('summary-box').innerHTML = '<strong class="text-ink-900">Summary:</strong> ' + data.summary;
+        const list = document.getElementById('pain-points-list');
+        list.innerHTML = '';
+        data.painPoints.forEach((pt, i) => {
+          const severity = pt.severity || 'High';
+          const colorClass = severity === 'Critical' ? 'severity-critical' : severity === 'High' ? 'severity-high' : 'severity-medium';
+          list.innerHTML += '<div class="border-l-2 border-ink-300 pl-4 fade-in" style="animation-delay: ' + (i * 0.1) + 's"><div class="flex items-start justify-between gap-3"><div><p class="font-medium text-ink-900 text-sm mb-0.5">' + (i+1) + '. ' + pt.title + '</p><p class="text-xs text-ink-500">' + pt.description + '</p></div><span class="shrink-0 text-xs px-2 py-0.5 rounded font-medium ' + colorClass + '">' + severity + '</span></div></div>';
+        });
+      } catch (err) {
+        document.getElementById('loading-section').classList.add('hidden');
+        document.getElementById('input-section').classList.remove('hidden');
+        alert('Something went wrong. Please try again.');
+        console.error(err);
+      }
+    }
+
+    async function unlockFullReport() {
+      const btn = document.getElementById('unlock-btn');
+      btn.textContent = 'Redirecting...';
+      btn.disabled = true;
+      try {
+        const response = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ origin: window.location.origin }) });
+        if (!response.ok) throw new Error('Checkout error');
+        const data = await response.json();
+        window.location.href = data.url;
+      } catch (err) {
+        btn.textContent = 'Unlock Full Report — $7';
+        btn.disabled = false;
+        alert('Checkout unavailable. Please try again.');
+        console.error(err);
+      }
+    }
+
+    function resetTool() {
+      document.getElementById('results-section').classList.add('hidden');
+      document.getElementById('full-report-section').classList.add('hidden');
+      document.getElementById('success-section').classList.add('hidden');
+      document.getElementById('input-section').classList.remove('hidden');
+      textInput.value = '';
+      charCount.textContent = '0 characters';
+      charCount.className = 'text-xs text-ink-400';
+      sessionStorage.removeItem('painscan_text');
+      sessionStorage.removeItem('painscan_session');
+    }
+
+    function copyReport() {
+      const content = document.getElementById('full-report-content');
+      const text = content.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target.closest('button');
+        const original = btn.innerHTML;
+        btn.innerHTML = 'Copied!';
+        setTimeout(() => { btn.innerHTML = original; }, 2000);
+      });
+    }
+
+    function downloadReport() {
+      if (!fullReportData) return;
+      const text = formatReportAsText(fullReportData);
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'painscan-report.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function formatReportAsText(data) {
+      let out = 'PAINSCAN REPORT\n' + '='.repeat(40) + '\n\nSUMMARY\n' + data.summary + '\n\n';
+      if (data.painPoints?.length) {
+        out += 'PAIN POINTS\n';
+        data.painPoints.forEach((pt, i) => { out += (i+1) + '. ' + pt.title + ' [' + (pt.severity || 'High') + ']\n   ' + pt.description + '\n'; });
+      }
+      if (data.emotionalTriggers?.length) { out += '\nEMOTIONAL TRIGGERS\n'; data.emotionalTriggers.forEach(t => out += '• ' + t + '\n'); }
+      if (data.jobsToBeDone?.length) { out += '\nJOBS TO BE DONE\n'; data.jobsToBeDone.forEach(j => out += '• ' + j + '\n'); }
+      if (data.copywritingHooks?.length) { out += '\nCOPYWRITING HOOKS\n'; data.copywritingHooks.forEach(h => out += '• "' + h + '"\n'); }
+      out += '\n' + '='.repeat(40) + '\npainscan.fyi';
+      return out;
+    }
+
+    function renderFullReport(data) {
+      fullReportData = data;
+      document.getElementById('success-section').classList.add('hidden');
+      document.getElementById('full-report-section').classList.remove('hidden');
+      const container = document.getElementById('full-report-content');
+      container.innerHTML = '<div class="bg-ink-50 border border-ink-200 rounded-lg p-4"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-2">Summary</p><p class="text-ink-800">' + data.summary + '</p></div>';
+      if (data.painPoints?.length) {
+        let html = '<div><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-3">Pain Points (' + data.painPoints.length + ')</p><div class="space-y-3">';
+        data.painPoints.forEach((pt, i) => {
+          const severity = pt.severity || 'High';
+          const colorClass = severity === 'Critical' ? 'severity-critical' : severity === 'High' ? 'severity-high' : 'severity-medium';
+          html += '<div class="border-l-2 border-ink-300 pl-4"><div class="flex items-start justify-between gap-3"><div><p class="font-medium text-ink-900 text-sm">' + (i+1) + '. ' + pt.title + '</p><p class="text-xs text-ink-500 mt-0.5">' + pt.description + '</p></div><span class="shrink-0 text-xs px-2 py-0.5 rounded font-medium ' + colorClass + '">' + severity + '</span></div></div>';
+        });
+        html += '</div></div>';
+        container.innerHTML += html;
+      }
+      if (data.emotionalTriggers?.length) {
+        container.innerHTML += '<div class="bg-ink-50 border border-ink-200 rounded-lg p-4"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-2">Emotional Triggers</p><ul class="space-y-1">' + data.emotionalTriggers.map(t => '<li class="text-sm text-ink-700 flex gap-2"><span class="text-scan-500">•</span>' + t + '</li>').join('') + '</ul></div>';
+      }
+      if (data.jobsToBeDone?.length) {
+        container.innerHTML += '<div class="bg-ink-50 border border-ink-200 rounded-lg p-4"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-2">Jobs to Be Done</p><ul class="space-y-1">' + data.jobsToBeDone.map(j => '<li class="text-sm text-ink-700 flex gap-2"><span class="text-scan-500">•</span>' + j + '</li>').join('') + '</ul></div>';
+      }
+      if (data.copywritingHooks?.length) {
+        container.innerHTML += '<div class="bg-scan-50 border border-scan-200 rounded-lg p-4"><p class="text-xs text-scan-700 uppercase tracking-wide font-medium mb-2">Copywriting Hooks</p><div class="space-y-2">' + data.copywritingHooks.map(h => '<p class="text-sm text-scan-800 italic">"' + h + '"</p>').join('') + '</div></div>';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      if (!sessionId) return;
+      window.history.replaceState({}, '', window.location.pathname);
+      const text = sessionStorage.getItem('painscan_text');
+      document.getElementById('input-section').classList.add('hidden');
+      document.getElementById('success-section').classList.remove('hidden');
+      document.getElementById('tool').scrollIntoView({ behavior: 'smooth' });
+      if (!text) {
+        document.getElementById('success-section').innerHTML = '<div class="text-center py-8"><div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-green-600"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3 class="font-display font-semibold text-ink-900 mb-2">Payment confirmed</h3><p class="text-ink-500 text-sm mb-4">Please paste your text again to generate your report.</p><button onclick="restoreAfterPayment(\'' + sessionId + '\')" class="btn-primary px-6 py-2.5 rounded-lg font-medium text-sm">Continue</button></div>';
+        return;
+      }
+      try {
+        const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sessionId }) });
+        if (!response.ok) throw new Error('Analysis failed');
+        const data = await response.json();
+        renderFullReport(data);
+        sessionStorage.removeItem('painscan_text');
+      } catch (err) {
+        document.getElementById('success-section').innerHTML = '<div class="text-center py-8"><p class="font-display font-semibold text-ink-900 mb-2">Something went wrong</p><p class="text-ink-500 text-sm">Payment was received. Email <a href="mailto:hello@painscan.fyi" class="text-scan-600">hello@painscan.fyi</a> and we\'ll process your report manually.</p></div>';
+        console.error(err);
+      }
+    });
+
+    function restoreAfterPayment(sessionId) {
+      sessionStorage.setItem('painscan_session', sessionId);
+      document.getElementById('success-section').classList.add('hidden');
+      document.getElementById('input-section').classList.remove('hidden');
+      document.getElementById('preview-btn').innerHTML = '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" class="text-white"><path d="M10 2v16M2 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Generate Full Report';
+      document.getElementById('preview-btn').onclick = function() { runAnalysisWithSession(sessionId); };
+    }
+
+    async function runAnalysisWithSession(sessionId) {
+      const text = textInput.value.trim();
+      if (!text || text.length < 100) { alert('Please paste your text to continue.'); return; }
+      document.getElementById('input-section').classList.add('hidden');
+      document.getElementById('loading-section').classList.remove('hidden');
+      try {
+        const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, sessionId }) });
+        if (!response.ok) throw new Error('Failed');
+        const data = await response.json();
+        document.getElementById('loading-section').classList.add('hidden');
+        document.getElementById('success-section').classList.remove('hidden');
+        renderFullReport(data);
+      } catch (err) {
+        document.getElementById('loading-section').classList.add('hidden');
+        document.getElementById('input-section').classList.remove('hidden');
+        alert('Analysis failed. Please email hello@painscan.fyi with your session ID: ' + sessionId);
+      }
+    }
+  </script>
+</body>
+</html>
