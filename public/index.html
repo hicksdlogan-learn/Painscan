@@ -25,19 +25,33 @@
       }
     }
   </script>
+  <script>
+    // Theme init - runs before paint to prevent flash
+    (function(){
+      var t = localStorage.getItem('ps-theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme:dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   <style>
     *::selection { background: #fdba74; color: #171717; }
-    body { background: #fafafa; color: #171717; }
+    body { background: #fafafa; color: #171717; transition: background .3s, color .3s; }
+    html.dark body { background: #09090b; color: #fafafa; }
     .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
     .bg-grid { background-image: linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px); background-size: 40px 40px; }
+    html.dark .bg-grid { background-image: linear-gradient(to right, #1c1c1c 1px, transparent 1px), linear-gradient(to bottom, #1c1c1c 1px, transparent 1px); }
     .scan-line { position: relative; overflow: hidden; }
     .scan-line::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #f97316, transparent); animation: scan 2s ease-in-out infinite; }
     @keyframes scan { 0%, 100% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
     .btn-primary { background: #171717; color: white; transition: all 0.15s ease; }
-    .btn-primary:hover { background: #262626; transform: translateY(-1px); }
+    html.dark .btn-primary { background: #fafafa; color: #171717; }
+    .btn-primary:hover { opacity:.9; transform: translateY(-1px); }
     .btn-primary:active { transform: translateY(0); }
     .btn-secondary { background: white; color: #171717; border: 1px solid #e5e5e5; transition: all 0.15s ease; }
+    html.dark .btn-secondary { background: #171717; color: #fafafa; border-color: #262626; }
     .btn-secondary:hover { border-color: #d4d4d4; background: #fafafa; }
+    html.dark .btn-secondary:hover { border-color: #404040; background: #262626; }
     textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
     .card-hover { transition: all 0.2s ease; }
     .card-hover:hover { border-color: #d4d4d4; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
@@ -50,6 +64,31 @@
     .severity-high { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
     .severity-medium { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
     .severity-low { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+    /* Dark mode overrides */
+    html.dark .bg-white\/80 { background: rgba(9,9,11,.8) !important; }
+    html.dark .bg-white, html.dark .bg-ink-50\/50 { background: #171717 !important; }
+    html.dark .bg-ink-50 { background: #1c1c1c !important; }
+    html.dark .border-ink-200, html.dark .border-ink-100, html.dark .border-ink-300 { border-color: #262626 !important; }
+    html.dark .text-ink-900 { color: #fafafa !important; }
+    html.dark .text-ink-800 { color: #e5e5e5 !important; }
+    html.dark .text-ink-700 { color: #d4d4d4 !important; }
+    html.dark .text-ink-600 { color: #a3a3a3 !important; }
+    html.dark .text-ink-500 { color: #737373 !important; }
+    html.dark .text-ink-400 { color: #525252 !important; }
+    html.dark .card-hover:hover { box-shadow: 0 4px 20px rgba(255,255,255,0.03); }
+    html.dark textarea { background: #0a0a0a !important; border-color: #262626 !important; color: #fafafa !important; }
+    html.dark .spinner { border-color: #262626; border-top-color: #fafafa; }
+    html.dark .blurred { opacity: .5; }
+    html.dark .severity-critical { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.25); }
+    html.dark .severity-high { background: rgba(234,88,12,.12); border-color: rgba(234,88,12,.25); }
+    html.dark .severity-medium { background: rgba(202,138,4,.12); border-color: rgba(202,138,4,.25); }
+    html.dark .severity-low { background: rgba(2,132,199,.12); border-color: rgba(2,132,199,.25); }
+    .theme-btn { cursor:pointer; padding:6px 8px; border-radius:8px; border:1px solid #e5e5e5; background:white; transition:all .15s; display:flex; align-items:center; }
+    html.dark .theme-btn { border-color:#262626; background:#171717; color:#fafafa; }
+    .theme-btn:hover { border-color:#d4d4d4; }
+    html.dark .theme-btn:hover { border-color:#404040; }
+    /* Logo adapts to dark mode */
+    html.dark .logo-mark .st2 { fill: #fafafa; }
   </style>
 </head>
 <body class="font-sans antialiased min-h-screen">
@@ -58,10 +97,14 @@
   <nav class="relative border-b border-ink-200 px-6 py-4 bg-white/80 backdrop-blur-sm">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#171717"/><path d="M8 14h12M14 8v12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-        <span class="font-display font-bold text-lg tracking-tight">PainScan</span>
+        <img src="/logo.svg" alt="PainScan" width="32" height="32" class="rounded">
+        <span class="font-display font-bold text-lg tracking-tight text-ink-900">PainScan</span>
       </a>
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleTheme()" class="theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
         <span class="text-ink-500 text-sm hidden sm:block">$7 per report</span>
         <a href="#tool" class="btn-primary text-sm font-medium px-4 py-2 rounded-lg">Try Free</a>
       </div>
@@ -275,7 +318,7 @@
     <div class="max-w-5xl mx-auto px-6">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#171717"/><path d="M8 14h12M14 8v12" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+          <img src="/logo.svg" alt="PainScan" width="22" height="22" class="rounded">
           <span class="font-display font-semibold text-ink-900">PainScan</span>
         </div>
         <div class="flex items-center gap-6 text-sm text-ink-500">
@@ -469,6 +512,20 @@
         alert('Analysis failed. Please email hello@painscan.fyi with your session ID: ' + sessionId);
       }
     }
+
+    // Dark mode
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      var isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('ps-theme', isDark ? 'dark' : 'light');
+      updateIcons();
+    }
+    function updateIcons() {
+      var isDark = document.documentElement.classList.contains('dark');
+      document.querySelectorAll('.sun-icon').forEach(function(el){ el.style.display = isDark ? 'block' : 'none'; });
+      document.querySelectorAll('.moon-icon').forEach(function(el){ el.style.display = isDark ? 'none' : 'block'; });
+    }
+    updateIcons();
   </script>
 </body>
 </html>
