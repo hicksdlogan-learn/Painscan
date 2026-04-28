@@ -97,7 +97,8 @@
   <nav class="relative border-b border-ink-200 px-6 py-4 bg-white/80 backdrop-blur-sm">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
       <a href="/" class="flex items-center gap-2">
-        <img src="/logo.svg" alt="PainScan" width="32" height="32" class="rounded">
+        <img src="/logo.svg" alt="PainScan" width="32" height="32" class="rounded logo-light">
+        <img src="/logo-dark.svg" alt="PainScan" width="32" height="32" class="rounded logo-dark" style="display:none">
         <span class="font-display font-bold text-lg tracking-tight text-ink-900">PainScan</span>
       </a>
       <div class="flex items-center gap-3">
@@ -318,7 +319,8 @@
     <div class="max-w-5xl mx-auto px-6">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <img src="/logo.svg" alt="PainScan" width="22" height="22" class="rounded">
+          <img src="/logo.svg" alt="PainScan" width="22" height="22" class="rounded logo-light">
+          <img src="/logo-dark.svg" alt="PainScan" width="22" height="22" class="rounded logo-dark" style="display:none">
           <span class="font-display font-semibold text-ink-900">PainScan</span>
         </div>
         <div class="flex items-center gap-6 text-sm text-ink-500">
@@ -524,6 +526,8 @@
       var isDark = document.documentElement.classList.contains('dark');
       document.querySelectorAll('.sun-icon').forEach(function(el){ el.style.display = isDark ? 'block' : 'none'; });
       document.querySelectorAll('.moon-icon').forEach(function(el){ el.style.display = isDark ? 'none' : 'block'; });
+      document.querySelectorAll('.logo-light').forEach(function(el){ el.style.display = isDark ? 'none' : 'block'; });
+      document.querySelectorAll('.logo-dark').forEach(function(el){ el.style.display = isDark ? 'block' : 'none'; });
     }
     updateIcons();
   </script>
