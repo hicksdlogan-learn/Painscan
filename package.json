@@ -14,7 +14,7 @@
     "stripe": "^16.0.0"
   },
   "devDependencies": {
-    "vercel": "^37.0.0"
+    "vercel": "^52.0.0"
   },
   "engines": {
     "node": ">=18"
