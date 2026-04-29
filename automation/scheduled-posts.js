@@ -26,14 +26,34 @@ The $7 tool: painscan.fyi`
   },
   {
     platform: 'indiehackers',
-    type: 'share_product',
-    template: `I built a $7 tool that turns Reddit threads into customer research reports in 60 seconds.
+    type: 'experiment_share',
+    template: `The $7 experiment: Can automated research replace 3 hours of manual digging?
 
-Paste any customer text → get ranked pain points, emotional triggers, jobs-to-be-done, and copywriting hooks.
+I'm a designer who got curious about Voice of Customer research after seeing copywriters charge more for the research than the copy.
 
-Free preview (3 pain points, no card): painscan.fyi
+Built a simple scraper + analyzer. First test: health brand client, 3 hours of manual review reading vs. 10 minutes of automated extraction.
 
-What customer research tools do you use?`
+Manual found: 12 distinct pain points, rich language patterns
+Automated found: 9 of the same 12, plus 3 the manual missed
+
+Not perfect, but surprisingly close. Client paid $7 for the automated report. Said it surfaced confusion points they'd missed in 6 months of calls.
+
+Question: For those doing customer research — is speed worth trading some depth? Or is the manual grind non-negotiable?`
+  },
+  {
+    platform: 'reddit_saas',
+    type: 'value_first_question',
+    template: `I spent 3 hours manually digging through reviews for a client. Here's what I learned.
+
+Context: I'm a designer, not a copywriter. Client wanted to understand why their health brand's landing page wasn't converting.
+
+I did what the pros do — scraped Amazon reviews, Reddit threads, support tickets. 3 hours of copy-pasting into a spreadsheet, highlighting patterns, categorizing pain points.
+
+The gold: Customers weren't complaining about the product. They were complaining about confusion — not knowing which version to buy, when results would show, how it compared to alternatives.
+
+Completely different pain points than what the client assumed.
+
+My takeaway: The manual process works, but it's brutal. Has anyone here found a faster way to extract Voice of Customer data without losing the nuance?`
   },
   {
     platform: 'reddit_sideproject',
@@ -56,11 +76,11 @@ function generateCalendar() {
   // Mix of platforms throughout the week
   const schedule = [
     { day: 'Monday', platform: 'twitter', type: 'value_first' },
-    { day: 'Tuesday', platform: 'indiehackers', type: 'share_product' },
+    { day: 'Tuesday', platform: 'indiehackers', type: 'experiment_share' },
     { day: 'Wednesday', platform: 'twitter', type: 'before_after' },
-    { day: 'Thursday', platform: 'reddit_sideproject', type: 'showcase' },
+    { day: 'Thursday', platform: 'reddit_saas', type: 'value_first_question' },
     { day: 'Friday', platform: 'twitter', type: 'value_first' },
-    { day: 'Saturday', platform: 'twitter', type: 'before_after' },
+    { day: 'Saturday', platform: 'reddit_sideproject', type: 'showcase' },
     { day: 'Sunday', platform: null, type: null } // rest day
   ];
   

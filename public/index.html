@@ -5,9 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PainScan — Customer Research in 60 Seconds</title>
   <meta name="description" content="Paste Reddit threads, reviews, or forum posts. Get structured pain point analysis in 60 seconds. $7 per report." />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -26,7 +31,6 @@
     }
   </script>
   <script>
-    // Theme init - runs before paint to prevent flash
     (function(){
       var t = localStorage.getItem('ps-theme');
       if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme:dark)').matches)) {
@@ -36,36 +40,149 @@
   </script>
   <style>
     *::selection { background: #fdba74; color: #171717; }
-    body { background: #fafafa; color: #171717; transition: background .3s, color .3s; }
+    body { background: #fafafa; color: #171717; transition: background .4s ease, color .4s ease; overflow-x: hidden; }
     html.dark body { background: #09090b; color: #fafafa; }
     .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
-    .bg-grid { background-image: linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px); background-size: 40px 40px; }
-    html.dark .bg-grid { background-image: linear-gradient(to right, #1c1c1c 1px, transparent 1px), linear-gradient(to bottom, #1c1c1c 1px, transparent 1px); }
-    .scan-line { position: relative; overflow: hidden; }
-    .scan-line::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, #f97316, transparent); animation: scan 2s ease-in-out infinite; }
-    @keyframes scan { 0%, 100% { transform: translateY(0); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
-    .btn-primary { background: #171717; color: white; transition: all 0.15s ease; }
-    html.dark .btn-primary { background: #fafafa; color: #171717; }
-    .btn-primary:hover { opacity:.9; transform: translateY(-1px); }
+
+    /* ── Animated mesh background ── */
+    .bg-mesh { position: fixed; inset: 0; z-index: -2; overflow: hidden; }
+    .bg-mesh::before {
+      content: ''; position: absolute; width: 150%; height: 150%; top: -25%; left: -25%;
+      background: radial-gradient(ellipse at 20% 50%, rgba(249,115,22,0.06) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(251,146,60,0.05) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 80%, rgba(234,88,12,0.04) 0%, transparent 50%);
+      animation: meshDrift 20s ease-in-out infinite alternate;
+    }
+    html.dark .bg-mesh::before {
+      background: radial-gradient(ellipse at 20% 50%, rgba(249,115,22,0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse at 80% 20%, rgba(251,146,60,0.06) 0%, transparent 50%),
+                  radial-gradient(ellipse at 50% 80%, rgba(234,88,12,0.05) 0%, transparent 50%);
+    }
+    @keyframes meshDrift { 0% { transform: translate(0,0) rotate(0deg); } 100% { transform: translate(30px, -20px) rotate(3deg); } }
+
+    /* Subtle dot pattern overlay */
+    .bg-dots { position: fixed; inset: 0; z-index: -1;
+      background-image: radial-gradient(circle, #d4d4d4 0.5px, transparent 0.5px);
+      background-size: 24px 24px; opacity: 0.3; }
+    html.dark .bg-dots { background-image: radial-gradient(circle, #262626 0.5px, transparent 0.5px); opacity: 0.5; }
+
+    /* Floating orbs */
+    .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; opacity: 0.12; }
+    html.dark .orb { opacity: 0.08; }
+    .orb-1 { width: 400px; height: 400px; background: #f97316; top: -100px; right: -100px; animation: orbFloat1 15s ease-in-out infinite alternate; }
+    .orb-2 { width: 300px; height: 300px; background: #fb923c; bottom: 20%; left: -80px; animation: orbFloat2 18s ease-in-out infinite alternate; }
+    .orb-3 { width: 250px; height: 250px; background: #ea580c; top: 60%; right: 10%; animation: orbFloat3 12s ease-in-out infinite alternate; }
+    @keyframes orbFloat1 { 0% { transform: translate(0, 0); } 100% { transform: translate(-40px, 60px); } }
+    @keyframes orbFloat2 { 0% { transform: translate(0, 0); } 100% { transform: translate(50px, -30px); } }
+    @keyframes orbFloat3 { 0% { transform: translate(0, 0); } 100% { transform: translate(-30px, -50px); } }
+
+    /* ── Scroll reveal ── */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: linear-gradient(135deg, #171717 0%, #404040 100%);
+      color: white; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative; overflow: hidden;
+    }
+    html.dark .btn-primary { background: linear-gradient(135deg, #fafafa 0%, #d4d4d4 100%); color: #171717; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+    html.dark .btn-primary:hover { box-shadow: 0 8px 30px rgba(255,255,255,0.1); }
     .btn-primary:active { transform: translateY(0); }
-    .btn-secondary { background: white; color: #171717; border: 1px solid #e5e5e5; transition: all 0.15s ease; }
+    .btn-primary::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::after { left: 100%; }
+
+    .btn-secondary { background: white; color: #171717; border: 1px solid #e5e5e5; transition: all 0.2s ease; }
     html.dark .btn-secondary { background: #171717; color: #fafafa; border-color: #262626; }
-    .btn-secondary:hover { border-color: #d4d4d4; background: #fafafa; }
+    .btn-secondary:hover { border-color: #d4d4d4; background: #fafafa; transform: translateY(-1px); }
     html.dark .btn-secondary:hover { border-color: #404040; background: #262626; }
-    textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
-    .card-hover { transition: all 0.2s ease; }
-    .card-hover:hover { border-color: #d4d4d4; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
-    .fade-in { animation: fadeIn 0.3s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    .spinner { width: 18px; height: 18px; border: 2px solid #e5e5e5; border-top-color: #171717; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+    /* ── Hero gradient text ── */
+    .gradient-text {
+      background: linear-gradient(135deg, #171717 0%, #525252 40%, #f97316 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    html.dark .gradient-text {
+      background: linear-gradient(135deg, #fafafa 0%, #d4d4d4 40%, #f97316 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Cards ── */
+    .card-hover {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .card-hover::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(249,115,22,0.05), transparent 60%);
+      opacity: 0; transition: opacity 0.3s ease;
+    }
+    .card-hover:hover::before { opacity: 1; }
+    .card-hover:hover { border-color: #fdba74; transform: translateY(-4px); box-shadow: 0 12px 40px rgba(249,115,22,0.08); }
+    html.dark .card-hover:hover { border-color: rgba(249,115,22,0.3); box-shadow: 0 12px 40px rgba(249,115,22,0.06); }
+
+    /* ── Scan line / loading ── */
+    .scan-line { position: relative; overflow: hidden; }
+    .scan-line::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #f97316 30%, #fb923c 50%, #f97316 70%, transparent);
+      animation: scan 2s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(249,115,22,0.5);
+    }
+    @keyframes scan { 0%,100% { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(500px); opacity: 0; } }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid #e5e5e5; border-top-color: #f97316;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    html.dark .spinner { border-color: #262626; border-top-color: #f97316; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Stats counter ── */
+    .stat-number { display: inline-block; }
+
+    /* ── Form ── */
+    textarea { transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+    textarea:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1), 0 4px 20px rgba(249,115,22,0.05); }
+
+    /* ── Misc ── */
+    .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .blurred { filter: blur(4px); user-select: none; pointer-events: none; }
+
     .severity-critical { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
     .severity-high { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
     .severity-medium { background: #fefce8; color: #ca8a04; border: 1px solid #fef08a; }
     .severity-low { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
-    /* Dark mode overrides */
-    html.dark .bg-white\/80 { background: rgba(9,9,11,.8) !important; }
+
+    /* ── Nav ── */
+    nav { transition: background 0.3s ease, box-shadow 0.3s ease; }
+    nav.scrolled { box-shadow: 0 1px 20px rgba(0,0,0,0.06); }
+    html.dark nav.scrolled { box-shadow: 0 1px 20px rgba(0,0,0,0.3); }
+
+    /* ── Section divider glow ── */
+    .section-glow { position: relative; }
+    .section-glow::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 200px; height: 1px;
+      background: linear-gradient(90deg, transparent, #f97316, transparent);
+      opacity: 0.4;
+    }
+
+    /* ── Dark mode overrides ── */
+    html.dark .bg-white\/80 { background: rgba(9,9,11,.85) !important; }
     html.dark .bg-white, html.dark .bg-ink-50\/50 { background: #171717 !important; }
     html.dark .bg-ink-50 { background: #1c1c1c !important; }
     html.dark .border-ink-200, html.dark .border-ink-100, html.dark .border-ink-300 { border-color: #262626 !important; }
@@ -75,30 +192,71 @@
     html.dark .text-ink-600 { color: #a3a3a3 !important; }
     html.dark .text-ink-500 { color: #737373 !important; }
     html.dark .text-ink-400 { color: #525252 !important; }
-    html.dark .card-hover:hover { box-shadow: 0 4px 20px rgba(255,255,255,0.03); }
     html.dark textarea { background: #0a0a0a !important; border-color: #262626 !important; color: #fafafa !important; }
-    html.dark .spinner { border-color: #262626; border-top-color: #fafafa; }
     html.dark .blurred { opacity: .5; }
     html.dark .severity-critical { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.25); }
     html.dark .severity-high { background: rgba(234,88,12,.12); border-color: rgba(234,88,12,.25); }
     html.dark .severity-medium { background: rgba(202,138,4,.12); border-color: rgba(202,138,4,.25); }
     html.dark .severity-low { background: rgba(2,132,199,.12); border-color: rgba(2,132,199,.25); }
-    .theme-btn { cursor:pointer; padding:6px 8px; border-radius:8px; border:1px solid #e5e5e5; background:white; transition:all .15s; display:flex; align-items:center; }
+
+    .theme-btn { cursor:pointer; padding:6px 8px; border-radius:8px; border:1px solid #e5e5e5; background:white; transition:all .2s ease; display:flex; align-items:center; }
     html.dark .theme-btn { border-color:#262626; background:#171717; color:#fafafa; }
-    .theme-btn:hover { border-color:#d4d4d4; }
+    .theme-btn:hover { border-color:#d4d4d4; transform: rotate(15deg); }
     html.dark .theme-btn:hover { border-color:#404040; }
-    /* Logo adapts to dark mode */
+
+    /* ── FAQ smooth open ── */
+    details .faq-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; padding: 0 1rem; }
+    details[open] .faq-content { max-height: 200px; padding: 0 1rem 1rem; }
+
+    /* ── Testimonial hover ── */
+    .testimonial-card { transition: all 0.3s ease; }
+    .testimonial-card:hover { transform: translateY(-2px) scale(1.01); }
+    .testimonial-card:hover .stars { letter-spacing: 2px; }
+    .stars { transition: letter-spacing 0.3s ease; }
+
+    /* Pulse ring on CTA */
+    .pulse-ring { position: relative; }
+    .pulse-ring::before {
+      content: ''; position: absolute; inset: -4px; border-radius: inherit;
+      border: 2px solid rgba(249,115,22,0.3);
+      animation: pulseRing 2s ease-out infinite;
+    }
+    @keyframes pulseRing { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.08); } }
+
     html.dark .logo-mark .st2 { fill: #fafafa; }
+    .preview-fade { background: linear-gradient(to top, #ffffff, transparent); }
+    html.dark .preview-fade { background: linear-gradient(to top, #171717, transparent); }
+    html.dark #demo-analyzing { background: rgba(23,23,23,0.92) !important; }
+    /* Logo visibility — CSS-driven so no flash before JS */
+    .logo-dark { opacity: 0; }
+    .logo-light { opacity: 1; }
+    html.dark .logo-dark { opacity: 1; }
+    html.dark .logo-light { opacity: 0; }
+    html.dark #demo-cursor path { fill: #fafafa; stroke: #171717; }
+    #demo-scanning { transition: opacity 0.4s ease; }
+    #demo-input { transition: opacity 0.3s ease; }
+    #demo-card { position: relative; }
+
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
   </style>
 </head>
 <body class="font-sans antialiased min-h-screen">
-  <div class="fixed inset-0 bg-grid opacity-40 pointer-events-none"></div>
-  
-  <nav class="relative border-b border-ink-200 px-6 py-4 bg-white/80 backdrop-blur-sm">
+  <!-- Background layers -->
+  <div class="bg-mesh"></div>
+  <div class="bg-dots"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- Nav -->
+  <nav id="main-nav" class="sticky top-0 z-50 border-b border-ink-200 px-6 py-4 bg-white/80 backdrop-blur-md">
     <div class="max-w-5xl mx-auto flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2">
-        <img src="/logo.svg" alt="PainScan" width="32" height="32" class="rounded logo-light">
-        <img src="/logo-dark.svg" alt="PainScan" width="32" height="32" class="rounded logo-dark" style="display:none">
+      <a href="/" class="flex items-center gap-2 group">
+        <span class="relative inline-block w-10 h-10">
+          <img src="/logo.svg" alt="PainScan" width="40" height="40" class="rounded logo-light absolute inset-0 transition-all group-hover:rotate-12 duration-300">
+          <img src="/logo-dark.svg" alt="PainScan" width="40" height="40" class="rounded logo-dark absolute inset-0 transition-all group-hover:rotate-12 duration-300">
+        </span>
         <span class="font-display font-bold text-lg tracking-tight text-ink-900">PainScan</span>
       </a>
       <div class="flex items-center gap-3">
@@ -112,25 +270,115 @@
     </div>
   </nav>
 
-  <section class="relative max-w-5xl mx-auto px-6 pt-16 pb-12">
+  <!-- Hero -->
+  <section class="relative max-w-5xl mx-auto px-6 pt-20 pb-16">
     <div class="text-center max-w-3xl mx-auto">
-      <p class="text-scan-600 text-sm font-medium tracking-wide uppercase mb-4">Customer Research Tool</p>
-      <h1 class="font-display text-4xl sm:text-5xl font-bold text-ink-900 leading-tight mb-5">Find what your customers<br/>are actually saying.</h1>
-      <p class="text-lg text-ink-600 max-w-2xl mx-auto mb-8 leading-relaxed">Paste Reddit threads, Amazon reviews, or forum posts. Get structured pain point analysis with copywriting hooks and product angles — in 60 seconds.</p>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
-        <a href="#tool" class="btn-primary px-6 py-3 rounded-lg font-medium text-base">Try Free Preview</a>
+      <p class="reveal text-scan-600 text-sm font-medium tracking-wide uppercase mb-4">Turn Raw Feedback Into Revenue</p>
+      <h1 class="reveal reveal-delay-1 font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+        <span class="gradient-text">Find what your customers</span><br/>
+        <span class="gradient-text">are actually saying.</span>
+      </h1>
+      <p class="reveal reveal-delay-2 text-lg text-ink-600 max-w-2xl mx-auto mb-10 leading-relaxed">Paste Reddit threads, Amazon reviews, or forum posts. Get structured pain point analysis with copywriting hooks and product angles — in 60 seconds.</p>
+      <div class="reveal reveal-delay-3 flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a href="#tool" class="btn-primary px-8 py-3.5 rounded-xl font-medium text-base pulse-ring">Try Free Preview</a>
         <span class="text-ink-400 text-sm">No signup required</span>
       </div>
+      <!-- Trust badges -->
+      <div class="reveal reveal-delay-4 flex items-center justify-center gap-6 mt-8 text-ink-400">
+        <div class="flex items-center gap-1.5 text-xs">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+          <span>Powered by Stripe</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Secure checkout</span>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+          <span>30-day money back</span>
+        </div>
+      </div>
     </div>
-    <div class="mt-12 flex flex-wrap justify-center gap-8 text-center">
-      <div><p class="font-display text-3xl font-bold text-ink-900">60s</p><p class="text-ink-500 text-sm">vs. hours of reading</p></div>
-      <div><p class="font-display text-3xl font-bold text-ink-900">10+</p><p class="text-ink-500 text-sm">pain points surfaced</p></div>
-      <div><p class="font-display text-3xl font-bold text-ink-900">$7</p><p class="text-ink-500 text-sm">one-time, no subscription</p></div>
+    <div class="mt-16 flex flex-wrap justify-center gap-12 text-center">
+      <div class="reveal reveal-delay-1">
+        <p class="font-display text-4xl font-bold text-ink-900 stat-number" data-target="60" data-suffix="s">0s</p>
+        <p class="text-ink-500 text-sm mt-1">vs. hours of reading</p>
+      </div>
+      <div class="reveal reveal-delay-2">
+        <p class="font-display text-4xl font-bold text-ink-900 stat-number" data-target="10" data-suffix="+" data-prefix="">0+</p>
+        <p class="text-ink-500 text-sm mt-1">pain points surfaced</p>
+      </div>
+      <div class="reveal reveal-delay-3">
+        <p class="font-display text-4xl font-bold text-ink-900 stat-number" data-target="7" data-prefix="$">$0</p>
+        <p class="text-ink-500 text-sm mt-1">one-time, no subscription</p>
+      </div>
     </div>
   </section>
 
-  <section id="tool" class="relative max-w-3xl mx-auto px-6 pb-16">
-    <div class="bg-white border border-ink-200 rounded-2xl shadow-sm overflow-hidden">
+  <!-- Sample Report Preview (Animated Demo) -->
+  <section class="max-w-4xl mx-auto px-6 pb-20">
+    <div class="reveal">
+      <p class="text-center text-xs text-ink-400 uppercase tracking-widest font-medium mb-6">See it in action</p>
+      <div id="demo-card" class="relative bg-white border border-ink-200 rounded-2xl shadow-lg shadow-ink-900/[0.03] overflow-hidden" style="min-height:380px">
+
+        <!-- Phase 1: Paste + Click -->
+        <div id="demo-input" class="p-6">
+          <div class="mb-3 flex items-center justify-between">
+            <p class="font-display font-semibold text-ink-900 text-sm">Paste reviews, threads, or feedback</p>
+            <span id="demo-source-tag" class="text-xs text-ink-400">Amazon Reviews</span>
+          </div>
+          <div id="demo-textarea" class="w-full h-32 bg-ink-50 border border-ink-200 rounded-lg p-3 text-xs text-ink-600 leading-relaxed overflow-hidden font-mono" style="white-space:pre-wrap;word-break:break-word"></div>
+          <div class="mt-3 flex items-center justify-between">
+            <span id="demo-char-count" class="text-xs text-ink-400">0 characters</span>
+            <div class="relative">
+              <button id="demo-btn" class="btn-primary px-5 py-2.5 rounded-lg font-medium text-sm opacity-50 cursor-default transition-all duration-300">Get Report — $7</button>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase 2: Scanning -->
+        <div id="demo-scanning" class="absolute inset-0 z-10 flex flex-col items-center justify-center" style="opacity:0;pointer-events:none">
+          <div class="relative w-full h-full flex flex-col items-center justify-center">
+            <!-- Scan sweep bar -->
+            <div id="demo-sweep" class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-scan-500 to-transparent" style="top:0;opacity:0;box-shadow:0 0 20px rgba(249,115,22,0.6)"></div>
+            <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+            <p class="font-display font-semibold text-ink-900 text-sm mt-4">Analyzing pain points...</p>
+            <p id="demo-scan-label" class="text-xs text-ink-400 mt-1">Processing 847 reviews</p>
+            <div class="flex gap-4 mt-4">
+              <div class="text-center"><p id="demo-counter" class="font-display font-bold text-scan-600 text-lg">0</p><p class="text-xs text-ink-400">found</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phase 3: Report -->
+        <div id="demo-report" class="transition-opacity duration-500" style="opacity:0">
+          <!-- filled by JS -->
+        </div>
+
+        <!-- Fake cursor (absolute over whole card) -->
+        <div id="demo-cursor" class="absolute pointer-events-none z-20" style="opacity:0;left:0;top:0;transition:left 0.7s cubic-bezier(0.16,1,0.3,1),top 0.7s cubic-bezier(0.16,1,0.3,1),opacity 0.3s ease">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-7 2-4 7L5 3z" fill="#171717" stroke="#fff" stroke-width="1"/></svg>
+        </div>
+        <!-- Fade overlay -->
+        <div class="preview-fade absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-[5]"></div>
+      </div>
+      <!-- Progress indicator -->
+      <div class="flex items-center justify-between mt-4">
+        <p class="text-xs text-ink-400">Real output from PainScan analyses</p>
+        <div class="flex items-center gap-2.5">
+          <span id="demo-counter-label" class="text-xs text-ink-400 font-medium tabular-nums">1 / 8</span>
+          <div class="w-16 h-1 bg-ink-200 rounded-full overflow-hidden">
+            <div id="demo-progress" class="h-full bg-scan-500 rounded-full" style="width:12.5%;transition:width 0.4s ease"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tool -->
+  <section id="tool" class="relative max-w-3xl mx-auto px-6 pb-20">
+    <div class="reveal bg-white border border-ink-200 rounded-2xl shadow-lg shadow-ink-900/[0.03] overflow-hidden">
       <div class="border-b border-ink-100 px-6 py-4 flex items-center justify-between bg-ink-50/50">
         <div class="flex items-center gap-3">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" class="text-scan-600"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -163,7 +411,7 @@
         <div id="results-section" class="hidden fade-in">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-display font-semibold text-ink-900">Preview Report</h3>
-            <button onclick="resetTool()" class="text-xs text-ink-400 hover:text-ink-600">← Start over</button>
+            <button onclick="resetTool()" class="text-xs text-ink-400 hover:text-ink-600 transition-colors">← Start over</button>
           </div>
           <div id="summary-box" class="bg-ink-50 border border-ink-100 rounded-xl p-4 mb-5 text-sm text-ink-700"></div>
           <div class="mb-4">
@@ -180,7 +428,20 @@
               <p><strong>Copywriting hook:</strong> "Stop losing hours to [X]. Solve it in 60 seconds."</p>
             </div>
             <button id="unlock-btn" onclick="unlockFullReport()" class="btn-primary w-full py-3 rounded-lg font-medium">Unlock Full Report — $7</button>
-            <p class="text-xs text-ink-400 mt-2">One-time payment • 30-day refund guarantee</p>
+            <div class="flex items-center justify-center gap-4 mt-3 text-ink-400">
+              <div class="flex items-center gap-1 text-xs">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+                <span>Stripe</span>
+              </div>
+              <div class="flex items-center gap-1 text-xs">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>Secure</span>
+              </div>
+              <div class="flex items-center gap-1 text-xs">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <span>30-day refund</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -210,128 +471,181 @@
     </div>
   </section>
 
-  <section class="max-w-5xl mx-auto px-6 pb-16">
-    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-10">How it works</h2>
+  <!-- How it works -->
+  <section class="section-glow max-w-5xl mx-auto px-6 pb-20 pt-4">
+    <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-12">How it works</h2>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
+      <div class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl p-6 card-hover overflow-hidden">
         <div class="w-10 h-10 bg-ink-900 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">1</span></div>
         <h3 class="font-display font-semibold text-ink-900 mb-2">Paste your text</h3>
         <p class="text-ink-500 text-sm">Reddit threads, Amazon reviews, forum posts, support tickets — anything with customer language.</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
+      <div class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl p-6 card-hover overflow-hidden">
         <div class="w-10 h-10 bg-ink-900 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">2</span></div>
         <h3 class="font-display font-semibold text-ink-900 mb-2">Get free preview</h3>
         <p class="text-ink-500 text-sm">See your top 3 pain points instantly. No account, no card, no friction.</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-6 card-hover">
-        <div class="w-10 h-10 bg-scan-500 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">3</span></div>
+      <div class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl p-6 card-hover overflow-hidden">
+        <div class="w-10 h-10 bg-gradient-to-br from-scan-500 to-scan-600 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">3</span></div>
         <h3 class="font-display font-semibold text-ink-900 mb-2">Unlock insights</h3>
         <p class="text-ink-500 text-sm">$7 unlocks the full report: copy hooks, emotional triggers, jobs-to-be-done, and product angles.</p>
       </div>
     </div>
   </section>
 
-  <section class="max-w-5xl mx-auto px-6 pb-16">
-    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-10">Who uses PainScan</h2>
+  <!-- Who uses -->
+  <section class="section-glow max-w-5xl mx-auto px-6 pb-20 pt-4">
+    <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-12">Who uses PainScan</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+      <div class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
         <p class="font-display font-semibold text-ink-900 mb-1">Etsy Sellers</p>
         <p class="text-ink-500 text-sm">Scan competitor reviews to find product gaps and write better listings.</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+      <div class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
         <p class="font-display font-semibold text-ink-900 mb-1">Indie Founders</p>
         <p class="text-ink-500 text-sm">Validate problems before building. Find the exact words customers use.</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+      <div class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
         <p class="font-display font-semibold text-ink-900 mb-1">Copywriters</p>
         <p class="text-ink-500 text-sm">Extract "voice of customer" gold for ads, emails, and landing pages.</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
+      <div class="reveal reveal-delay-4 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
         <p class="font-display font-semibold text-ink-900 mb-1">Product Teams</p>
         <p class="text-ink-500 text-sm">Process hundreds of support tickets and reviews in seconds.</p>
       </div>
     </div>
   </section>
 
-  <section class="max-w-4xl mx-auto px-6 pb-16">
+  <!-- Testimonials -->
+  <section class="max-w-4xl mx-auto px-6 pb-20">
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
-        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+      <div class="reveal reveal-delay-1 testimonial-card bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="stars flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
         <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Scanned 3 months of Etsy reviews in 30 seconds. Found the exact feature gap my competitor was missing."</p>
         <p class="text-ink-400 text-xs">— Beta tester, Etsy seller</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
-        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+      <div class="reveal reveal-delay-2 testimonial-card bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="stars flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
         <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Used to spend 4+ hours on customer research. Now I paste reviews and get hooks in seconds."</p>
         <p class="text-ink-400 text-xs">— Early user, freelance copywriter</p>
       </div>
-      <div class="bg-white border border-ink-200 rounded-xl p-5 card-hover">
-        <div class="flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
+      <div class="reveal reveal-delay-3 testimonial-card bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="stars flex gap-0.5 text-scan-500 mb-3 text-sm">★★★★★</div>
         <p class="text-ink-700 text-sm mb-4 leading-relaxed">"Ran our 6-month support thread through PainScan before a roadmap meeting. Surfaced patterns we missed."</p>
         <p class="text-ink-400 text-xs">— Beta tester, startup PM</p>
       </div>
     </div>
   </section>
 
-  <section class="max-w-2xl mx-auto px-6 pb-16">
-    <h2 class="font-display text-2xl font-bold text-ink-900 text-center mb-8">FAQ</h2>
+  <!-- FAQ -->
+  <section class="section-glow max-w-2xl mx-auto px-6 pb-20 pt-4">
+    <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-10">FAQ</h2>
     <div class="space-y-3">
-      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+      <details class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
           <span class="font-medium text-ink-900 text-sm">What text can I paste in?</span>
-          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-4 pb-4 text-sm text-ink-600">Anything with human language: Reddit threads, Amazon reviews, Trustpilot, G2, Twitter threads, forum posts, Discord transcripts, support tickets, survey responses. The more text, the better the analysis.</div>
+        <div class="faq-content text-sm text-ink-600">Anything with human language: Reddit threads, Amazon reviews, Trustpilot, G2, Twitter threads, forum posts, Discord transcripts, support tickets, survey responses. The more text, the better the analysis.</div>
       </details>
-      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+      <details class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
           <span class="font-medium text-ink-900 text-sm">What's in the full $7 report?</span>
-          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-4 pb-4 text-sm text-ink-600">10+ ranked pain points, emotional triggers, jobs-to-be-done analysis, copywriting hooks (ready to use), competitor gaps, and suggested product/content angles.</div>
+        <div class="faq-content text-sm text-ink-600">10+ ranked pain points, emotional triggers, jobs-to-be-done analysis, copywriting hooks (ready to use), competitor gaps, and suggested product/content angles.</div>
       </details>
-      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+      <details class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
           <span class="font-medium text-ink-900 text-sm">How is this different from ChatGPT?</span>
-          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-4 pb-4 text-sm text-ink-600">PainScan uses a specialized framework built for customer research. You get structured, consistent, actionable output — not a wall of text to re-interpret. Plus it's faster than crafting the right prompt yourself.</div>
+        <div class="faq-content text-sm text-ink-600">PainScan uses a specialized framework built for customer research. You get structured, consistent, actionable output — not a wall of text to re-interpret. Plus it's faster than crafting the right prompt yourself.</div>
       </details>
-      <details class="bg-white border border-ink-200 rounded-xl overflow-hidden group">
+      <details class="reveal reveal-delay-4 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
           <span class="font-medium text-ink-900 text-sm">What's your refund policy?</span>
-          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="px-4 pb-4 text-sm text-ink-600">30-day money-back guarantee, no questions asked. Email hello@painscan.fyi and you'll be refunded within 24 hours.</div>
+        <div class="faq-content text-sm text-ink-600">30-day money-back guarantee, no questions asked. Email hello@painscan.fyi and you'll be refunded within 24 hours.</div>
       </details>
     </div>
   </section>
 
-  <section class="border-t border-ink-200 py-16 bg-ink-50/50">
-    <div class="max-w-2xl mx-auto px-6 text-center">
-      <h2 class="font-display text-3xl font-bold text-ink-900 mb-3">Stop guessing. Start knowing.</h2>
-      <p class="text-ink-500 mb-6">Your next product insight is one paste away.</p>
-      <a href="#tool" class="btn-primary px-8 py-3 rounded-lg font-medium inline-block">Try Free Preview</a>
+  <!-- CTA -->
+  <section class="border-t border-ink-200 py-20 bg-ink-50/50 relative overflow-hidden">
+    <div class="absolute inset-0 opacity-30">
+      <div class="orb" style="width:300px;height:300px;background:#f97316;top:-50px;left:20%;filter:blur(100px);opacity:0.1;animation:orbFloat1 10s ease-in-out infinite alternate"></div>
+    </div>
+    <div class="reveal max-w-2xl mx-auto px-6 text-center relative">
+      <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
+        <span class="gradient-text">Stop guessing. Start knowing.</span>
+      </h2>
+      <p class="text-ink-500 mb-8 text-lg">Your next product insight is one paste away.</p>
+      <a href="#tool" class="btn-primary px-10 py-4 rounded-xl font-medium text-base inline-block pulse-ring">Try Free Preview</a>
     </div>
   </section>
 
+  <!-- Footer -->
   <footer class="border-t border-ink-200 py-8 bg-white">
     <div class="max-w-5xl mx-auto px-6">
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-          <img src="/logo.svg" alt="PainScan" width="22" height="22" class="rounded logo-light">
-          <img src="/logo-dark.svg" alt="PainScan" width="22" height="22" class="rounded logo-dark" style="display:none">
+          <span class="relative inline-block w-7 h-7">
+            <img src="/logo.svg" alt="PainScan" width="28" height="28" class="rounded logo-light absolute inset-0 transition-opacity duration-300">
+            <img src="/logo-dark.svg" alt="PainScan" width="28" height="28" class="rounded logo-dark absolute inset-0 transition-opacity duration-300">
+          </span>
           <span class="font-display font-semibold text-ink-900">PainScan</span>
         </div>
         <div class="flex items-center gap-6 text-sm text-ink-500">
-          <a href="mailto:hello@painscan.fyi" class="hover:text-ink-700">hello@painscan.fyi</a>
-          <span>© 2025</span>
+          <a href="mailto:hello@painscan.fyi" class="hover:text-scan-600 transition-colors">hello@painscan.fyi</a>
+          <span>© 2026</span>
         </div>
       </div>
     </div>
   </footer>
 
   <script>
+    /* ── Scroll reveal (IntersectionObserver) ── */
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    /* ── Animated stat counters ── */
+    const statObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.target);
+          const prefix = el.dataset.prefix || '';
+          const suffix = el.dataset.suffix || '';
+          let current = 0;
+          const duration = 1200;
+          const step = target / (duration / 16);
+          const counter = setInterval(() => {
+            current += step;
+            if (current >= target) { current = target; clearInterval(counter); }
+            el.textContent = prefix + Math.round(current) + suffix;
+          }, 16);
+          statObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.stat-number').forEach(el => statObserver.observe(el));
+
+    /* ── Nav scroll shadow ── */
+    const nav = document.getElementById('main-nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    /* ── Form logic (unchanged) ── */
     const textInput = document.getElementById('text-input');
     const charCount = document.getElementById('char-count');
     textInput.addEventListener('input', () => {
@@ -361,7 +675,7 @@
         data.painPoints.forEach((pt, i) => {
           const severity = pt.severity || 'High';
           const colorClass = severity === 'Critical' ? 'severity-critical' : severity === 'High' ? 'severity-high' : 'severity-medium';
-          list.innerHTML += '<div class="border-l-2 border-ink-300 pl-4 fade-in" style="animation-delay: ' + (i * 0.1) + 's"><div class="flex items-start justify-between gap-3"><div><p class="font-medium text-ink-900 text-sm mb-0.5">' + (i+1) + '. ' + pt.title + '</p><p class="text-xs text-ink-500">' + pt.description + '</p></div><span class="shrink-0 text-xs px-2 py-0.5 rounded font-medium ' + colorClass + '">' + severity + '</span></div></div>';
+          list.innerHTML += '<div class="border-l-2 border-ink-300 pl-4 fade-in" style="animation-delay: ' + (i * 0.15) + 's"><div class="flex items-start justify-between gap-3"><div><p class="font-medium text-ink-900 text-sm mb-0.5">' + (i+1) + '. ' + pt.title + '</p><p class="text-xs text-ink-500">' + pt.description + '</p></div><span class="shrink-0 text-xs px-2 py-0.5 rounded font-medium ' + colorClass + '">' + severity + '</span></div></div>';
         });
       } catch (err) {
         document.getElementById('loading-section').classList.add('hidden');
@@ -406,21 +720,237 @@
       navigator.clipboard.writeText(text).then(() => {
         const btn = event.target.closest('button');
         const original = btn.innerHTML;
-        btn.innerHTML = 'Copied!';
+        btn.innerHTML = '✓ Copied!';
         setTimeout(() => { btn.innerHTML = original; }, 2000);
       });
     }
 
     function downloadReport() {
       if (!fullReportData) return;
-      const text = formatReportAsText(fullReportData);
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'painscan-report.txt';
-      a.click();
-      URL.revokeObjectURL(url);
+      generatePDF(fullReportData);
+    }
+
+    function generatePDF(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+      const margin = 50;
+      const contentW = W - margin * 2;
+      let y = 0;
+
+      // Colors
+      const orange = [249, 115, 22];
+      const darkText = [23, 23, 23];
+      const midText = [82, 82, 82];
+      const lightText = [115, 115, 115];
+      const bgLight = [250, 250, 250];
+      const severityColors = {
+        Critical: { bg: [254, 226, 226], text: [220, 38, 38] },
+        High:     { bg: [255, 237, 213], text: [234, 88, 12] },
+        Medium:   { bg: [254, 252, 232], text: [161, 98, 7] },
+        Low:      { bg: [224, 242, 254], text: [2, 132, 199] }
+      };
+
+      function checkPage(need) {
+        if (y + need > H - 60) {
+          // Footer on current page
+          addFooter(doc);
+          doc.addPage();
+          y = margin;
+        }
+      }
+
+      function addFooter(d) {
+        d.setFontSize(8);
+        d.setTextColor(...lightText);
+        d.text('Generated by PainScan — painscan.fyi', W / 2, H - 25, { align: 'center' });
+        d.setDrawColor(...orange);
+        d.setLineWidth(0.5);
+        d.line(margin, H - 40, W - margin, H - 40);
+      }
+
+      // ─── HEADER BAR ───
+      doc.setFillColor(...darkText);
+      doc.rect(0, 0, W, 80, 'F');
+      // Orange accent stripe
+      doc.setFillColor(...orange);
+      doc.rect(0, 80, W, 4, 'F');
+
+      // Logo text
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text('PainScan', margin, 42);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200);
+      doc.text('AI Pain Point Analysis Report', margin, 60);
+
+      // Date
+      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.setFontSize(9);
+      doc.setTextColor(200, 200, 200);
+      doc.text(today, W - margin, 52, { align: 'right' });
+
+      y = 110;
+
+      // ─── EXECUTIVE SUMMARY ───
+      if (data.summary) {
+        doc.setFillColor(...bgLight);
+        const summaryLines = doc.splitTextToSize(data.summary, contentW - 24);
+        const boxH = summaryLines.length * 16 + 36;
+        checkPage(boxH + 30);
+        doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'F');
+        doc.setDrawColor(229, 229, 229);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'S');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...orange);
+        doc.text('EXECUTIVE SUMMARY', margin + 12, y + 18);
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...darkText);
+        doc.text(summaryLines, margin + 12, y + 34);
+        y += boxH + 20;
+      }
+
+      // ─── PAIN POINTS ───
+      if (data.painPoints?.length) {
+        checkPage(40);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text('Pain Points', margin, y);
+        doc.setFontSize(10);
+        doc.setTextColor(...lightText);
+        doc.text('(' + data.painPoints.length + ' identified)', margin + doc.getTextWidth('Pain Points ') + 4, y);
+        y += 8;
+
+        // Orange underline
+        doc.setDrawColor(...orange);
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        data.painPoints.forEach((pt, i) => {
+          const severity = pt.severity || 'High';
+          const descLines = doc.splitTextToSize(pt.description || '', contentW - 30);
+          const itemH = 20 + descLines.length * 14 + 12;
+          checkPage(itemH);
+
+          // Left accent bar
+          const sc = severityColors[severity] || severityColors.High;
+          doc.setFillColor(...sc.text);
+          doc.roundedRect(margin, y, 3, itemH - 8, 1.5, 1.5, 'F');
+
+          // Title
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(...darkText);
+          doc.text((i + 1) + '. ' + pt.title, margin + 14, y + 12);
+
+          // Severity badge
+          const badgeText = severity;
+          doc.setFontSize(8);
+          const badgeW = doc.getTextWidth(badgeText) + 12;
+          const badgeX = W - margin - badgeW;
+          doc.setFillColor(...sc.bg);
+          doc.roundedRect(badgeX, y + 2, badgeW, 16, 4, 4, 'F');
+          doc.setTextColor(...sc.text);
+          doc.setFont('Helvetica', 'bold');
+          doc.text(badgeText, badgeX + 6, y + 13);
+
+          // Description
+          if (descLines.length && descLines[0]) {
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(...midText);
+            doc.text(descLines, margin + 14, y + 28);
+          }
+
+          y += itemH;
+        });
+        y += 8;
+      }
+
+      // ─── HELPER: Bullet list section ───
+      function renderListSection(title, items, accentColor) {
+        if (!items?.length) return;
+        checkPage(50);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text(title, margin, y);
+        y += 8;
+        doc.setDrawColor(...(accentColor || orange));
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        items.forEach(item => {
+          const lines = doc.splitTextToSize(item, contentW - 20);
+          checkPage(lines.length * 14 + 8);
+          // Bullet
+          doc.setFillColor(...(accentColor || orange));
+          doc.circle(margin + 4, y - 3, 2.5, 'F');
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(...midText);
+          doc.text(lines, margin + 16, y);
+          y += lines.length * 14 + 6;
+        });
+        y += 10;
+      }
+
+      // ─── EMOTIONAL TRIGGERS ───
+      renderListSection('Emotional Triggers', data.emotionalTriggers);
+
+      // ─── JOBS TO BE DONE ───
+      renderListSection('Jobs to Be Done', data.jobsToBeDone);
+
+      // ─── COPYWRITING HOOKS ───
+      if (data.copywritingHooks?.length) {
+        checkPage(50);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text('Copywriting Hooks', margin, y);
+        y += 8;
+        doc.setDrawColor(...orange);
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        data.copywritingHooks.forEach(hook => {
+          const lines = doc.splitTextToSize('"' + hook + '"', contentW - 30);
+          const boxH = lines.length * 14 + 16;
+          checkPage(boxH + 6);
+          doc.setFillColor(255, 247, 237);
+          doc.roundedRect(margin, y - 6, contentW, boxH, 4, 4, 'F');
+          doc.setDrawColor(253, 186, 116);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(margin, y - 6, contentW, boxH, 4, 4, 'S');
+          doc.setFont('Helvetica', 'bolditalic');
+          doc.setFontSize(10);
+          doc.setTextColor(...orange);
+          doc.text(lines, margin + 14, y + 6);
+          y += boxH + 6;
+        });
+        y += 10;
+      }
+
+      // ─── PRODUCT ANGLES ───
+      renderListSection('Product Angles', data.productAngles);
+
+      // ─── COMPETITOR GAPS ───
+      renderListSection('Competitor Gaps', data.competitorGaps);
+
+      // Footer on last page
+      addFooter(doc);
+
+      doc.save('PainScan-Report.pdf');
     }
 
     function formatReportAsText(data) {
@@ -515,6 +1045,349 @@
       }
     }
 
+    // ── Animated Demo System ──
+    var demoReports = [
+      {
+        source: 'Amazon Reviews', topic: 'Bluetooth Earbuds', reviewCount: 847,
+        sampleText: '\u2605\u2606 2/5 - Battery dies halfway through my run every single time. Bought these for the gym and they can\'t even last 45 minutes. The ear tips also fall out constantly when I\'m doing any kind of movement. For $80 I expected way better...\n\n\u2605\u2606 1/5 - Bluetooth drops every time someone walks near me at the gym. Had to re-pair 3 times in one workout. Returning these immediately.\n\n\u2605\u2606\u2606 3/5 - Sound quality is decent but they get so uncomfortable after 20 min...',
+        count: 12,
+        painPoints: [
+          { text: 'Battery dies mid-workout', severity: 'critical', mentions: 34, note: '#1 frustration' },
+          { text: 'Ear tips fall out during runs', severity: 'high', mentions: 28, note: 'fit issue' },
+          { text: 'Bluetooth drops in crowded gyms', severity: 'high', mentions: 19, note: 'connectivity' }
+        ],
+        emotion: 'Feeling betrayed when expensive gear fails during a workout they finally made time for',
+        jtbd: 'Help me get through a full workout without tech interruptions',
+        hook: 'Your earbuds should outlast your playlist \u2014 not die at mile 2.'
+      },
+      {
+        source: 'Reddit r/skincare', topic: 'Moisturizers', reviewCount: 1243,
+        sampleText: 'Tried the CeraVe dupe everyone recommends. Broke me out in 3 days flat. My skin was CLEAR before this. Now I have cystic acne on my chin.\n\nSame experience. Also it feels so greasy under makeup, like I put vaseline on my face. My foundation just slides off by noon.\n\nDoes anyone else get headaches from the fragrance? I can\'t even open the jar without feeling nauseous. Why do they add perfume to skincare??',
+        count: 18,
+        painPoints: [
+          { text: 'Breaks me out after 3 days', severity: 'critical', mentions: 41, note: '#1 complaint' },
+          { text: 'Feels greasy under makeup', severity: 'high', mentions: 33, note: 'texture issue' },
+          { text: 'Fragrance triggers headaches', severity: 'high', mentions: 22, note: 'sensitivity' }
+        ],
+        emotion: 'Frustration at spending $40 on a product that makes their skin worse than doing nothing',
+        jtbd: 'Give me hydration that works under makeup without causing breakouts',
+        hook: 'Your moisturizer shouldn\'t be the reason you need concealer.'
+      },
+      {
+        source: 'G2 Reviews', topic: 'Project Management Tools', reviewCount: 634,
+        sampleText: 'It takes 6 clicks just to mark a task as done. SIX. I timed it. The old version was one click. This "redesign" killed our team\'s productivity.\n\nThe notification system is broken. I get 47 emails a day from this tool. Can\'t figure out how to turn them off without missing actual updates.\n\nMobile app is a joke. Can\'t even view attachments or edit descriptions. We\'re paying $15/seat for this?',
+        count: 15,
+        painPoints: [
+          { text: 'Too many clicks to update a task', severity: 'critical', mentions: 52, note: '#1 frustration' },
+          { text: 'Notifications are overwhelming', severity: 'high', mentions: 38, note: 'noise fatigue' },
+          { text: 'Mobile app is basically useless', severity: 'high', mentions: 29, note: 'feature gap' }
+        ],
+        emotion: 'The tool meant to save time is eating more time than the work itself',
+        jtbd: 'Let me see what\'s due and update it in under 10 seconds',
+        hook: 'Your project tool should manage projects \u2014 not become one.'
+      },
+      {
+        source: 'Trustpilot', topic: 'Online Mattress Brands', reviewCount: 2100,
+        sampleText: 'First week was amazing. By week 4 I\'m waking up in a pool of sweat. The "cooling gel" is pure marketing. This thing traps heat like a greenhouse.\n\nEdge support is nonexistent. I sit on the edge to put shoes on and literally slide off. My old $300 mattress was better.\n\nBeen 3 weeks and the chemical smell is STILL there. Had to sleep on the couch for the first 10 days. How is this legal?',
+        count: 21,
+        painPoints: [
+          { text: 'Sleeps hot after first month', severity: 'critical', mentions: 47, note: '#1 deal breaker' },
+          { text: 'Edge support collapses sitting up', severity: 'high', mentions: 31, note: 'structural' },
+          { text: 'Off-gassing smell lasts weeks', severity: 'medium', mentions: 24, note: 'chemical concern' }
+        ],
+        emotion: 'Regret at being stuck with a $1,200 purchase that ruins their sleep',
+        jtbd: 'Let me sleep cool all night without paying luxury hotel prices',
+        hook: 'A mattress that sleeps hot isn\'t a mattress \u2014 it\'s a heating pad you can\'t return.'
+      },
+      {
+        source: 'Reddit r/coffee', topic: 'Espresso Machines', reviewCount: 518,
+        sampleText: 'Grinder jammed after 2 weeks of daily use. Customer service said it\'s "normal wear" and not covered. On a $500 machine. Are you kidding me?\n\nSteam wand pressure is completely random. One day it\'s perfect microfoam, next day it spits and sputters. Same beans, same technique.\n\nDescaling takes 45 minutes and you need their proprietary $12 tablets. The manual is 80 pages long just for maintenance.',
+        count: 14,
+        painPoints: [
+          { text: 'Grinder clogs after 2 weeks', severity: 'critical', mentions: 36, note: '#1 defect' },
+          { text: 'Steam wand pressure inconsistent', severity: 'high', mentions: 27, note: 'quality control' },
+          { text: 'Descaling process is a nightmare', severity: 'medium', mentions: 19, note: 'maintenance' }
+        ],
+        emotion: 'Spending $500 to make worse coffee than the $6 caf\u00e9 down the street',
+        jtbd: 'Help me make caf\u00e9-quality lattes at home without an engineering degree',
+        hook: 'If your espresso machine needs its own YouTube tutorial, it\'s already lost.'
+      },
+      {
+        source: 'App Store', topic: 'Fitness Apps', reviewCount: 3200,
+        sampleText: 'Downloaded it because it said FREE. Did one workout, loved it. Opened it the next day \u2014 paywall. $14.99/month to do a second workout. That\'s predatory.\n\nRan a 5K and it said I ran 6.2 miles. GPS is wildly inaccurate. My friend\'s free app tracked it perfectly.\n\nApple Health sync fails every other day. I have to delete and reinstall to get it working again. Lost 2 weeks of data last month.',
+        count: 16,
+        painPoints: [
+          { text: 'Paywall hits after first workout', severity: 'critical', mentions: 58, note: '#1 complaint' },
+          { text: 'GPS tracking drifts 20%+ on runs', severity: 'high', mentions: 34, note: 'accuracy' },
+          { text: 'Syncs fail with Apple Health weekly', severity: 'high', mentions: 26, note: 'integration' }
+        ],
+        emotion: 'Feeling tricked by a "free" app that locks basic features behind $15/month',
+        jtbd: 'Track my workouts accurately and let me own my data',
+        hook: 'Free shouldn\'t mean "free until you actually want to use it."'
+      },
+      {
+        source: 'Amazon Reviews', topic: 'Standing Desks', reviewCount: 1580,
+        sampleText: 'Motor stopped working at 5 months. Stuck at standing height. Can\'t sit, can\'t lower it. Warranty claim has been "processing" for 6 weeks.\n\nAt full height this desk wobbles so bad my webcam shakes on Zoom calls. Coworkers asked if I was in an earthquake. Embarrassing.\n\nThere\'s literally nowhere to route cables. No tray, no clips, no grommets. Just a flat surface with a motor. $600 and I still had to buy a $30 cable tray.',
+        count: 11,
+        painPoints: [
+          { text: 'Motor dies within 6 months', severity: 'critical', mentions: 29, note: '#1 failure' },
+          { text: 'Wobbles badly above 38 inches', severity: 'high', mentions: 43, note: 'stability' },
+          { text: 'Cable management is an afterthought', severity: 'medium', mentions: 21, note: 'design flaw' }
+        ],
+        emotion: 'Investing in health only to get a wobbly desk that shakes during video calls',
+        jtbd: 'Give me a stable desk that lasts years, not a wobbly science project',
+        hook: 'A standing desk that wobbles on calls isn\'t ergonomic \u2014 it\'s embarrassing.'
+      },
+      {
+        source: 'Reddit r/dogs', topic: 'Subscription Dog Food', reviewCount: 892,
+        sampleText: 'My golden retriever sniffed the bowl once and walked away. Tried mixing it with his old food \u2014 he ate around it. $90/month for food my dog won\'t touch.\n\nTried to cancel after the first box. Website loops you through 5 "are you sure?" pages then says call us. Waited on hold 40 minutes.\n\nBox arrived and the ice packs were completely melted. Food was warm and smelled rancid. In JANUARY. How does that happen?',
+        count: 13,
+        painPoints: [
+          { text: 'Dog refused to eat it completely', severity: 'critical', mentions: 37, note: '#1 issue' },
+          { text: 'Impossible to cancel subscription', severity: 'high', mentions: 31, note: 'dark pattern' },
+          { text: 'Arrived thawed and smelled off', severity: 'high', mentions: 22, note: 'shipping' }
+        ],
+        emotion: 'Guilt over feeding their best friend food even they wouldn\'t touch',
+        jtbd: 'Feed my dog healthy food without the subscription trap',
+        hook: 'If your dog won\'t eat it, all the "human-grade" labels in the world don\'t matter.'
+      }
+    ];
+
+    function renderReport(r) {
+      var severityBorder = { critical: 'border-scan-400', high: 'border-scan-300', medium: 'border-ink-300', low: 'border-ink-200' };
+      var painHtml = r.painPoints.map(function(p) {
+        return '<div class="border-l-2 ' + (severityBorder[p.severity] || 'border-ink-200') + ' pl-3">' +
+          '<div class="flex items-center justify-between gap-2">' +
+          '<p class="font-medium text-ink-900 text-sm">' + p.text + '</p>' +
+          '<span class="text-xs px-2 py-0.5 rounded font-medium whitespace-nowrap severity-' + p.severity + '">' + p.severity.charAt(0).toUpperCase() + p.severity.slice(1) + '</span>' +
+          '</div><p class="text-xs text-ink-500 mt-0.5">Mentioned ' + p.mentions + ' times \u2014 ' + p.note + '</p></div>';
+      }).join('');
+      return '<div class="border-b border-ink-100 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 bg-ink-50/50 flex-wrap">' +
+        '<div class="flex items-center gap-3">' +
+        '<div class="w-8 h-8 bg-gradient-to-br from-scan-500 to-scan-600 rounded-lg flex items-center justify-center">' +
+        '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" class="text-white"><circle cx="9" cy="9" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M15 15l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>' +
+        '<div><p class="font-display font-semibold text-ink-900 text-sm">PainScan Report</p>' +
+        '<p class="text-xs text-ink-400">' + r.source + ' \u2014 ' + r.topic + '</p></div></div>' +
+        '<span class="text-xs bg-green-100 text-green-700 px-2.5 py-1 rounded-full font-medium whitespace-nowrap">' + r.count + ' pain points found</span></div>' +
+        '<div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">' +
+        '<div class="space-y-3"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium">Top Pain Points</p>' + painHtml + '</div>' +
+        '<div class="space-y-3">' +
+        '<div class="bg-ink-50 border border-ink-100 rounded-lg p-3"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-1.5">Emotional Trigger</p><p class="text-sm text-ink-700">"' + r.emotion + '"</p></div>' +
+        '<div class="bg-ink-50 border border-ink-100 rounded-lg p-3"><p class="text-xs text-ink-500 uppercase tracking-wide font-medium mb-1.5">Job to Be Done</p><p class="text-sm text-ink-700">"' + r.jtbd + '"</p></div>' +
+        '<div class="bg-scan-50 border border-scan-200 rounded-lg p-3"><p class="text-xs text-scan-700 uppercase tracking-wide font-medium mb-1.5">Copywriting Hook</p><p class="text-sm text-scan-700 italic">"' + r.hook + '"</p></div>' +
+        '</div></div>';
+    }
+
+    (function initDemo() {
+      var inputEl = document.getElementById('demo-input');
+      var textarea = document.getElementById('demo-textarea');
+      var charCount = document.getElementById('demo-char-count');
+      var sourceTag = document.getElementById('demo-source-tag');
+      var btn = document.getElementById('demo-btn');
+      var cursor = document.getElementById('demo-cursor');
+      var scanning = document.getElementById('demo-scanning');
+      var scanLabel = document.getElementById('demo-scan-label');
+      var sweep = document.getElementById('demo-sweep');
+      var counter = document.getElementById('demo-counter');
+      var report = document.getElementById('demo-report');
+      var counterLabel = document.getElementById('demo-counter-label');
+      var progressBar = document.getElementById('demo-progress');
+      var idx = 0;
+      var running = false;
+      var total = demoReports.length;
+
+      function updateProgress(n) {
+        counterLabel.textContent = (n + 1) + ' / ' + total;
+        progressBar.style.width = (((n + 1) / total) * 100) + '%';
+      }
+
+      function sleep(ms) { return new Promise(function(r) { setTimeout(r, ms); }); }
+
+      // Move cursor to a position relative to card
+      function moveCursor(x, y, dur) {
+        cursor.style.transition = 'left ' + (dur||0.7) + 's cubic-bezier(0.16,1,0.3,1), top ' + (dur||0.7) + 's cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease';
+        cursor.style.left = x + 'px';
+        cursor.style.top = y + 'px';
+      }
+
+      // Click animation on cursor
+      async function cursorClick() {
+        cursor.style.transition = 'transform 0.1s ease';
+        cursor.style.transform = 'scale(0.75)';
+        await sleep(120);
+        cursor.style.transform = 'scale(1)';
+        await sleep(100);
+      }
+
+      // Typewriter "paste" effect
+      async function typeText(text, speed) {
+        textarea.textContent = '';
+        var chunks = [];
+        var chunkSize = Math.ceil(text.length / 20);
+        for (var i = 0; i < text.length; i += chunkSize) {
+          chunks.push(text.slice(0, i + chunkSize));
+        }
+        for (var c = 0; c < chunks.length; c++) {
+          textarea.textContent = chunks[c];
+          charCount.textContent = chunks[c].length + ' characters';
+          await sleep(speed);
+        }
+        textarea.textContent = text;
+        charCount.textContent = text.length + ' characters';
+      }
+
+      // Animate counter from 0 to target
+      async function animateCounter(target) {
+        var dur = 1200, steps = 20, step = dur / steps;
+        for (var i = 1; i <= steps; i++) {
+          counter.textContent = Math.round((i / steps) * target);
+          await sleep(step);
+        }
+        counter.textContent = target;
+      }
+
+      // Sweep bar animation
+      async function runSweep(cardH) {
+        sweep.style.opacity = '1';
+        sweep.style.top = '0px';
+        sweep.style.transition = 'none';
+        await sleep(20);
+        sweep.style.transition = 'top 1.8s ease-in-out';
+        sweep.style.top = (cardH || 400) + 'px';
+        await sleep(1900);
+        sweep.style.opacity = '0';
+      }
+
+      // Get element center relative to demo-card
+      function posOf(el) {
+        var card = document.getElementById('demo-card');
+        var cr = card.getBoundingClientRect();
+        var er = el.getBoundingClientRect();
+        return { x: er.left - cr.left + er.width / 2, y: er.top - cr.top + er.height / 2 };
+      }
+
+      async function runCycle(r) {
+        running = true;
+
+        // Reset to input phase
+        inputEl.style.opacity = '1'; inputEl.style.display = 'block';
+        scanning.style.opacity = '0'; scanning.style.pointerEvents = 'none';
+        report.style.opacity = '0'; report.style.display = 'none';
+        textarea.textContent = '';
+        charCount.textContent = '0 characters';
+        btn.style.opacity = '0.5';
+        btn.style.transform = '';
+        sourceTag.textContent = r.source;
+
+        // Position cursor offscreen bottom-right
+        cursor.style.transition = 'none';
+        cursor.style.left = '105%';
+        cursor.style.top = '80%';
+        cursor.style.opacity = '0';
+        cursor.style.transform = 'scale(1)';
+        await sleep(600);
+
+        // Cursor enters from bottom-right, glides to textarea center
+        cursor.style.opacity = '1';
+        var taPos = posOf(textarea);
+        moveCursor(taPos.x, taPos.y, 0.8);
+        await sleep(900);
+
+        // Click on textarea
+        textarea.style.borderColor = '#f97316';
+        textarea.style.boxShadow = '0 0 0 3px rgba(249,115,22,0.1)';
+        await cursorClick();
+        await sleep(300);
+
+        // Paste text
+        await typeText(r.sampleText, 55);
+        await sleep(400);
+
+        // Enable button
+        btn.style.opacity = '1';
+        await sleep(300);
+
+        // Move cursor to the button
+        var btnPos = posOf(btn);
+        moveCursor(btnPos.x + 8, btnPos.y + 4, 0.7);
+        await sleep(800);
+
+        // Hover effect on button
+        btn.style.transform = 'translateY(-2px)';
+        btn.style.boxShadow = '0 8px 30px rgba(0,0,0,0.12)';
+        await sleep(300);
+
+        // Click button
+        await cursorClick();
+        btn.style.transform = 'scale(0.96)';
+        await sleep(150);
+        btn.style.transform = '';
+        btn.style.boxShadow = '';
+        await sleep(200);
+
+        // Fade cursor out
+        cursor.style.opacity = '0';
+        textarea.style.borderColor = '';
+        textarea.style.boxShadow = '';
+
+        // Phase 2: Scanning
+        inputEl.style.opacity = '0';
+        await sleep(300);
+        inputEl.style.display = 'none';
+        scanning.style.opacity = '1';
+        scanning.style.pointerEvents = 'auto';
+        scanLabel.textContent = 'Processing ' + r.reviewCount.toLocaleString() + ' reviews';
+        counter.textContent = '0';
+
+        var cardH = document.getElementById('demo-card').offsetHeight;
+        runSweep(cardH);
+        await animateCounter(r.count);
+        await sleep(800);
+
+        // Phase 3: Show report
+        scanning.style.opacity = '0';
+        scanning.style.pointerEvents = 'none';
+        await sleep(300);
+        report.innerHTML = renderReport(r);
+        report.style.display = 'block';
+        await sleep(50);
+        report.style.opacity = '1';
+
+        // Hold report visible
+        await sleep(5000);
+
+        // Fade out report
+        report.style.opacity = '0';
+        await sleep(500);
+        report.style.display = 'none';
+
+        running = false;
+      }
+
+      async function loop() {
+        while (true) {
+          updateProgress(idx);
+          await runCycle(demoReports[idx]);
+          idx = (idx + 1) % demoReports.length;
+          await sleep(300);
+        }
+      }
+
+      function jumpTo(n) {
+        idx = n;
+        // jumpTo is best-effort; next loop iteration picks it up
+      }
+
+      // Start on first scroll into view
+      var started = false;
+      var obs = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting && !started) {
+          started = true; obs.disconnect(); loop();
+        }
+      }, { threshold: 0.3 });
+      obs.observe(document.getElementById('demo-card'));
+    })();
+
     // Dark mode
     function toggleTheme() {
       document.documentElement.classList.toggle('dark');
@@ -526,8 +1399,8 @@
       var isDark = document.documentElement.classList.contains('dark');
       document.querySelectorAll('.sun-icon').forEach(function(el){ el.style.display = isDark ? 'block' : 'none'; });
       document.querySelectorAll('.moon-icon').forEach(function(el){ el.style.display = isDark ? 'none' : 'block'; });
-      document.querySelectorAll('.logo-light').forEach(function(el){ el.style.display = isDark ? 'none' : 'block'; });
-      document.querySelectorAll('.logo-dark').forEach(function(el){ el.style.display = isDark ? 'block' : 'none'; });
+      document.querySelectorAll('.logo-light').forEach(function(el){ el.style.opacity = isDark ? '0' : '1'; });
+      document.querySelectorAll('.logo-dark').forEach(function(el){ el.style.opacity = isDark ? '1' : '0'; });
     }
     updateIcons();
   </script>
