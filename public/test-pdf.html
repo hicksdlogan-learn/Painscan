@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PainScan PDF Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: system-ui; background: #0a0a0a; color: #fafafa; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    button { background: #f97316; color: white; border: none; padding: 16px 32px; font-size: 18px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+    button:hover { background: #ea580c; }
+  </style>
+</head>
+<body>
+  <button onclick="testPDF()">Generate Test PDF</button>
+
+  <script>
+    // Mock report data — mirrors what the analyze API returns
+    const mockData = {
+      summary: "Users of wireless earbuds are deeply frustrated by inconsistent noise cancellation, poor microphone quality during calls, and earbuds that fall out during workouts. There's a strong emotional pull toward products that 'just work' without fiddling with settings. The market has a clear gap for earbuds that prioritize call quality and secure fit over bass-heavy sound profiles.",
+      painPoints: [
+        { title: "Noise cancellation cuts out randomly", description: "Multiple users report ANC dropping mid-song or during commutes, creating a jarring experience that breaks immersion and trust in the product.", severity: "Critical" },
+        { title: "Terrible microphone quality on calls", description: "Wind noise, echo, and muffled audio make these unusable for work calls. Several users switched back to wired headsets specifically for meetings.", severity: "Critical" },
+        { title: "Earbuds fall out during exercise", description: "The universal tip design doesn't accommodate different ear shapes. Users resort to third-party ear hooks or tape — not a great look for a $200 product.", severity: "High" },
+        { title: "Battery life doesn't match claims", description: "Advertised 8 hours but users consistently report 5-6 hours with ANC on. The case adds charges but takes forever to recharge itself.", severity: "High" },
+        { title: "Companion app is bloated and slow", description: "Too many settings, EQ presets nobody uses, and forced firmware updates that take 15+ minutes. Users just want play/pause to work.", severity: "Medium" },
+        { title: "Touch controls are too sensitive", description: "Accidental taps pause music, skip tracks, or trigger voice assistants constantly. Many users disable touch controls entirely.", severity: "Low" }
+      ],
+      emotionalTriggers: [
+        "Frustration with products that overpromise on specs but underdeliver in real use",
+        "Embarrassment when earbuds fall out at the gym or during a run",
+        "Anxiety about taking work calls on earbuds and sounding unprofessional",
+        "Feeling ripped off paying premium prices for mid-tier microphone quality",
+        "Relief when finding earbuds that 'just work' without constant fiddling"
+      ],
+      jobsToBeDone: [
+        "Block out distractions during commute or deep work sessions",
+        "Take professional-quality calls without switching to a headset",
+        "Listen to music during intense workouts without readjusting",
+        "Quickly switch between phone and laptop audio sources",
+        "Get through a full workday without needing to recharge"
+      ],
+      copywritingHooks: [
+        "Your earbuds shouldn't need a PhD to set up.",
+        "Finally — earbuds your coworkers can actually hear you through.",
+        "Built for the gym, not just the couch.",
+        "8 hours means 8 hours. Even with ANC on.",
+        "No accidental skips. No phantom pauses. Just music."
+      ],
+      productAngles: [
+        "Position as the 'calls-first' earbud for remote workers and hybrid professionals",
+        "Market the secure fit as a primary feature, not an afterthought — partner with fitness influencers",
+        "Simplify the app to 3 screens max — differentiate on ease of use vs. feature bloat",
+        "Offer a 'real-world battery' guarantee that matches ANC-on usage, not lab conditions",
+        "Bundle with a compact desk mic as an upsell for users who need studio-quality calls"
+      ],
+      competitorGaps: [
+        "AirPods Pro dominate but microphone quality complaints are rising — opportunity to own 'best call quality'",
+        "Sony WF-1000XM5 leads ANC but fit complaints are widespread — secure fit is an open lane",
+        "No major brand markets specifically to remote workers despite being the #1 use case",
+        "Most companion apps try to do everything — a minimalist 'it just works' app would stand out",
+        "Warranty and support for lost/damaged earbuds is universally hated — disruption opportunity"
+      ]
+    };
+
+    function testPDF() {
+      generatePDF(mockData);
+    }
+
+    // ── PDF generator (same as main site) ──
+    function generatePDF(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+      const margin = 50;
+      const contentW = W - margin * 2;
+      let y = 0;
+
+      const orange = [249, 115, 22];
+      const darkText = [23, 23, 23];
+      const midText = [82, 82, 82];
+      const lightText = [115, 115, 115];
+      const bgLight = [250, 250, 250];
+      const severityColors = {
+        Critical: { bg: [254, 226, 226], text: [220, 38, 38] },
+        High:     { bg: [255, 237, 213], text: [234, 88, 12] },
+        Medium:   { bg: [254, 252, 232], text: [161, 98, 7] },
+        Low:      { bg: [224, 242, 254], text: [2, 132, 199] }
+      };
+
+      function checkPage(need) {
+        if (y + need > H - 60) {
+          addFooter(doc);
+          doc.addPage();
+          y = margin;
+        }
+      }
+
+      function addFooter(d) {
+        d.setFontSize(8);
+        d.setTextColor(...lightText);
+        d.text('Generated by PainScan — painscan.fyi', W / 2, H - 25, { align: 'center' });
+        d.setDrawColor(...orange);
+        d.setLineWidth(0.5);
+        d.line(margin, H - 40, W - margin, H - 40);
+      }
+
+      // HEADER
+      doc.setFillColor(...darkText);
+      doc.rect(0, 0, W, 80, 'F');
+      doc.setFillColor(...orange);
+      doc.rect(0, 80, W, 4, 'F');
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text('PainScan', margin, 42);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200);
+      doc.text('AI Pain Point Analysis Report', margin, 60);
+
+      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.setFontSize(9);
+      doc.setTextColor(200, 200, 200);
+      doc.text(today, W - margin, 52, { align: 'right' });
+
+      y = 110;
+
+      // EXECUTIVE SUMMARY
+      if (data.summary) {
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10.5);
+        const summaryLines = doc.splitTextToSize(data.summary, contentW - 40);
+        const lineH = doc.getLineHeight() / doc.internal.scaleFactor;
+        const textBlockH = summaryLines.length * lineH;
+        const labelH = 24;
+        const pad = 14;
+        const boxH = labelH + textBlockH + pad * 2;
+        checkPage(boxH + 30);
+        doc.setFillColor(...bgLight);
+        doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'F');
+        doc.setDrawColor(229, 229, 229);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'S');
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(...orange);
+        doc.text('EXECUTIVE SUMMARY', margin + 16, y + pad + 10);
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10.5);
+        doc.setTextColor(...darkText);
+        doc.text(summaryLines, margin + 16, y + pad + labelH + 4);
+        y += boxH + 20;
+      }
+
+      // PAIN POINTS
+      if (data.painPoints?.length) {
+        checkPage(40);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text('Pain Points', margin, y);
+        const titleW = doc.getTextWidth('Pain Points  ');
+        doc.setFontSize(10);
+        doc.setTextColor(...lightText);
+        doc.text('(' + data.painPoints.length + ' identified)', margin + titleW, y);
+        y += 8;
+        doc.setDrawColor(...orange);
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        data.painPoints.forEach((pt, i) => {
+          const severity = pt.severity || 'High';
+          const descLines = doc.splitTextToSize(pt.description || '', contentW - 30);
+          const itemH = 20 + descLines.length * 14 + 12;
+          checkPage(itemH);
+
+          const sc = severityColors[severity] || severityColors.High;
+          doc.setFillColor(...sc.text);
+          doc.roundedRect(margin, y, 3, itemH - 8, 1.5, 1.5, 'F');
+
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(...darkText);
+          doc.text((i + 1) + '. ' + pt.title, margin + 14, y + 12);
+
+          const badgeText = severity;
+          doc.setFontSize(8);
+          const badgeW = doc.getTextWidth(badgeText) + 12;
+          const badgeX = W - margin - badgeW;
+          doc.setFillColor(...sc.bg);
+          doc.roundedRect(badgeX, y + 2, badgeW, 16, 4, 4, 'F');
+          doc.setTextColor(...sc.text);
+          doc.setFont('Helvetica', 'bold');
+          doc.text(badgeText, badgeX + 6, y + 13);
+
+          if (descLines.length && descLines[0]) {
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(...midText);
+            doc.text(descLines, margin + 14, y + 28);
+          }
+
+          y += itemH;
+        });
+        y += 8;
+      }
+
+      // BULLET LIST HELPER
+      function renderListSection(title, items, accentColor) {
+        if (!items?.length) return;
+        checkPage(50);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text(title, margin, y);
+        y += 8;
+        doc.setDrawColor(...(accentColor || orange));
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        items.forEach(item => {
+          const lines = doc.splitTextToSize(item, contentW - 20);
+          checkPage(lines.length * 14 + 8);
+          doc.setFillColor(...(accentColor || orange));
+          doc.circle(margin + 4, y - 3, 2.5, 'F');
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(...midText);
+          doc.text(lines, margin + 16, y);
+          y += lines.length * 14 + 6;
+        });
+        y += 10;
+      }
+
+      renderListSection('Emotional Triggers', data.emotionalTriggers);
+      renderListSection('Jobs to Be Done', data.jobsToBeDone);
+
+      // COPYWRITING HOOKS
+      if (data.copywritingHooks?.length) {
+        checkPage(50);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(...darkText);
+        doc.text('Copywriting Hooks', margin, y);
+        y += 8;
+        doc.setDrawColor(...orange);
+        doc.setLineWidth(2);
+        doc.line(margin, y, margin + 60, y);
+        y += 16;
+
+        data.copywritingHooks.forEach(hook => {
+          const lines = doc.splitTextToSize('"' + hook + '"', contentW - 30);
+          const boxH = lines.length * 14 + 16;
+          checkPage(boxH + 6);
+          doc.setFillColor(255, 247, 237);
+          doc.roundedRect(margin, y - 6, contentW, boxH, 4, 4, 'F');
+          doc.setDrawColor(253, 186, 116);
+          doc.setLineWidth(0.5);
+          doc.roundedRect(margin, y - 6, contentW, boxH, 4, 4, 'S');
+          doc.setFont('Helvetica', 'bolditalic');
+          doc.setFontSize(10);
+          doc.setTextColor(...orange);
+          doc.text(lines, margin + 14, y + 6);
+          y += boxH + 6;
+        });
+        y += 10;
+      }
+
+      renderListSection('Product Angles', data.productAngles);
+      renderListSection('Competitor Gaps', data.competitorGaps);
+
+      addFooter(doc);
+      doc.save('PainScan-Report.pdf');
+    }
+  </script>
+</body>
+</html>

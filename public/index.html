@@ -797,10 +797,16 @@
 
       // ─── EXECUTIVE SUMMARY ───
       if (data.summary) {
-        doc.setFillColor(...bgLight);
-        const summaryLines = doc.splitTextToSize(data.summary, contentW - 24);
-        const boxH = summaryLines.length * 16 + 36;
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(10.5);
+        const summaryLines = doc.splitTextToSize(data.summary, contentW - 40);
+        const lineH = doc.getLineHeight() / doc.internal.scaleFactor;
+        const textBlockH = summaryLines.length * lineH;
+        const labelH = 24;  // space for "EXECUTIVE SUMMARY" label
+        const pad = 14;
+        const boxH = labelH + textBlockH + pad * 2;
         checkPage(boxH + 30);
+        doc.setFillColor(...bgLight);
         doc.roundedRect(margin, y, contentW, boxH, 6, 6, 'F');
         doc.setDrawColor(229, 229, 229);
         doc.setLineWidth(0.5);
@@ -808,11 +814,11 @@
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(9);
         doc.setTextColor(...orange);
-        doc.text('EXECUTIVE SUMMARY', margin + 12, y + 18);
+        doc.text('EXECUTIVE SUMMARY', margin + 16, y + pad + 10);
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(10.5);
         doc.setTextColor(...darkText);
-        doc.text(summaryLines, margin + 12, y + 34);
+        doc.text(summaryLines, margin + 16, y + pad + labelH + 4);
         y += boxH + 20;
       }
 
@@ -823,9 +829,10 @@
         doc.setFontSize(13);
         doc.setTextColor(...darkText);
         doc.text('Pain Points', margin, y);
+        const titleW = doc.getTextWidth('Pain Points  ');
         doc.setFontSize(10);
         doc.setTextColor(...lightText);
-        doc.text('(' + data.painPoints.length + ' identified)', margin + doc.getTextWidth('Pain Points ') + 4, y);
+        doc.text('(' + data.painPoints.length + ' identified)', margin + titleW, y);
         y += 8;
 
         // Orange underline
