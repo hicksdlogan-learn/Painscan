@@ -234,8 +234,10 @@
     html.dark .logo-light { opacity: 0; }
     html.dark #demo-cursor path { fill: #fafafa; stroke: #171717; }
     #demo-scanning { transition: opacity 0.4s ease; }
-    #demo-input { transition: opacity 0.3s ease; }
+    #demo-input { transition: opacity 0.3s ease; position: absolute; inset: 0; }
     #demo-card { position: relative; }
+    #demo-scanning { position: absolute; inset: 0; }
+    #demo-report { position: absolute; inset: 0; overflow-y: auto; }
 
     /* Smooth scroll */
     html { scroll-behavior: smooth; }
@@ -319,7 +321,7 @@
   <section class="max-w-4xl mx-auto px-6 pb-20">
     <div class="reveal">
       <p class="text-center text-xs text-ink-400 uppercase tracking-widest font-medium mb-6">See it in action</p>
-      <div id="demo-card" class="relative bg-white border border-ink-200 rounded-2xl shadow-lg shadow-ink-900/[0.03] overflow-hidden" style="min-height:380px">
+      <div id="demo-card" class="relative bg-white border border-ink-200 rounded-2xl shadow-lg shadow-ink-900/[0.03] overflow-hidden" style="height:420px">
 
         <!-- Phase 1: Paste + Click -->
         <div id="demo-input" class="p-6">
@@ -393,7 +395,7 @@
           <div class="flex items-center justify-between mt-4">
             <span id="char-count" class="text-xs text-ink-400">0 characters</span>
             <button id="preview-btn" onclick="runPreview()" class="btn-primary px-5 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" class="text-white"><path d="M10 2v16M2 10h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 2v16M2 10h16"/></svg>
               Get Free Report
             </button>
           </div>
