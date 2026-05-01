@@ -281,7 +281,7 @@
       <p class="reveal reveal-delay-2 text-lg text-ink-600 max-w-2xl mx-auto mb-10 leading-relaxed">Paste Reddit threads, Amazon reviews, or forum posts. Get structured pain point analysis with copywriting hooks and product angles — in 60 seconds.</p>
       <div class="reveal reveal-delay-3 flex flex-col sm:flex-row gap-3 justify-center items-center">
         <a href="#tool" class="btn-primary px-8 py-3.5 rounded-xl font-medium text-base pulse-ring">Try Free Preview</a>
-        <span class="text-ink-400 text-sm">No signup required</span>
+        <span class="text-ink-400 text-sm">1 full report free • No card required</span>
       </div>
       <!-- Trust badges -->
       <div class="reveal reveal-delay-4 flex items-center justify-center gap-6 mt-8 text-ink-400">
@@ -428,6 +428,12 @@
               <p><strong>Copywriting hook:</strong> "Stop losing hours to [X]. Solve it in 60 seconds."</p>
             </div>
             <button id="unlock-btn" onclick="unlockFullReport()" class="btn-primary w-full py-3 rounded-lg font-medium">Unlock Full Report — $7</button>
+            <div class="relative my-4">
+              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-ink-200"></div></div>
+              <div class="relative flex justify-center"><span class="bg-ink-50 px-2 text-xs text-ink-400">or</span></div>
+            </div>
+            <button id="free-scan-btn" onclick="claimFreeScan()" class="btn-secondary w-full py-3 rounded-lg font-medium text-sm">Claim 1 Free Report — No Card</button>
+            <p id="free-scan-status" class="text-xs text-ink-400 mt-2 hidden"></p>
             <div class="flex items-center justify-center gap-4 mt-3 text-ink-400">
               <div class="flex items-center gap-1 text-xs">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
@@ -471,6 +477,67 @@
     </div>
   </section>
 
+  <!-- Use Cases -->
+  <section class="section-glow max-w-5xl mx-auto px-6 pb-20 pt-4">
+    <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-12">What you'll use it for</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Validate a feature before building</p>
+        </div>
+        <p class="text-ink-500 text-sm">Paste 50 Reddit threads about your problem space. See if people actually care before you write code.</p>
+      </div>
+      <div class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Write landing page copy that converts</p>
+        </div>
+        <p class="text-ink-500 text-sm">Extract the exact phrases your customers use. Use their words in your headlines and watch CTR jump.</p>
+      </div>
+      <div class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Find gaps your competitors missed</p>
+        </div>
+        <p class="text-ink-500 text-sm">Scan competitor reviews. Find the complaints they ignore. Build the feature everyone wants but no one has.</p>
+      </div>
+      <div class="reveal reveal-delay-4 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Prepare for a sales call</p>
+        </div>
+        <p class="text-ink-500 text-sm">Scan their company's reviews before the meeting. Walk in knowing exactly what frustrates their customers.</p>
+      </div>
+      <div class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Prioritize your product roadmap</p>
+        </div>
+        <p class="text-ink-500 text-sm">Dump 6 months of support tickets into PainScan. See which issues actually matter vs. which are just loud.</p>
+      </div>
+      <div class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 bg-scan-100 rounded-lg flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          </div>
+          <p class="font-display font-semibold text-ink-900">Create content that resonates</p>
+        </div>
+        <p class="text-ink-500 text-sm">Find the questions people ask in forums. Write blog posts that answer them. Rank for terms your audience actually searches.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- How it works -->
   <section class="section-glow max-w-5xl mx-auto px-6 pb-20 pt-4">
     <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-12">How it works</h2>
@@ -488,7 +555,7 @@
       <div class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl p-6 card-hover overflow-hidden">
         <div class="w-10 h-10 bg-gradient-to-br from-scan-500 to-scan-600 rounded-lg flex items-center justify-center mb-4"><span class="text-white font-display font-bold">3</span></div>
         <h3 class="font-display font-semibold text-ink-900 mb-2">Unlock insights</h3>
-        <p class="text-ink-500 text-sm">$7 unlocks the full report: copy hooks, emotional triggers, jobs-to-be-done, and product angles.</p>
+        <p class="text-ink-500 text-sm">Get your first full report free (no card). After that, $7 unlocks copy hooks, emotional triggers, jobs-to-be-done, and product angles.</p>
       </div>
     </div>
   </section>
@@ -512,6 +579,73 @@
       <div class="reveal reveal-delay-4 bg-white border border-ink-200 rounded-xl p-5 card-hover overflow-hidden">
         <p class="font-display font-semibold text-ink-900 mb-1">Product Teams</p>
         <p class="text-ink-500 text-sm">Process hundreds of support tickets and reviews in seconds.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Competitor Comparison -->
+  <section class="section-glow max-w-4xl mx-auto px-6 pb-20 pt-4">
+    <h2 class="reveal font-display text-2xl font-bold text-ink-900 text-center mb-4">How we compare</h2>
+    <p class="reveal text-center text-ink-500 text-sm mb-10">PainScan vs. session recording tools</p>
+    <div class="reveal bg-white border border-ink-200 rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-ink-50/50 border-b border-ink-200">
+              <th class="text-left py-4 px-6 font-display font-semibold text-ink-900">Feature</th>
+              <th class="text-center py-4 px-4 font-display font-semibold text-scan-600">PainScan</th>
+              <th class="text-center py-4 px-4 font-display font-semibold text-ink-500">Hotjar</th>
+              <th class="text-center py-4 px-4 font-display font-semibold text-ink-500">FullStory</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">Price</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">$7/report</span> <span class="text-ink-400 text-xs block">or free</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">$39+/mo</td>
+              <td class="py-4 px-4 text-center text-ink-500">$299+/mo</td>
+            </tr>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">Setup time</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">60 seconds</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">Hours (install tracking)</td>
+              <td class="py-4 px-4 text-center text-ink-500">Hours (install tracking)</td>
+            </tr>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">What you get</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">Pain points + copy hooks</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">Heatmaps & recordings</td>
+              <td class="py-4 px-4 text-center text-ink-500">Session replays</td>
+            </tr>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">Data source</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">Any text (reviews, forums)</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">Your website visitors only</td>
+              <td class="py-4 px-4 text-center text-ink-500">Your website visitors only</td>
+            </tr>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">Competitor intel</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">Yes — scan their reviews</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">No</td>
+              <td class="py-4 px-4 text-center text-ink-500">No</td>
+            </tr>
+            <tr class="border-b border-ink-100">
+              <td class="py-4 px-6 text-ink-700">Privacy compliance</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">No tracking needed</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">Cookie banners required</td>
+              <td class="py-4 px-4 text-center text-ink-500">Cookie banners required</td>
+            </tr>
+            <tr>
+              <td class="py-4 px-6 text-ink-700">Best for</td>
+              <td class="py-4 px-4 text-center"><span class="font-semibold text-scan-600">Pre-build research</span></td>
+              <td class="py-4 px-4 text-center text-ink-500">Post-launch optimization</td>
+              <td class="py-4 px-4 text-center text-ink-500">Post-launch optimization</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-ink-50/50 border-t border-ink-200 px-6 py-4">
+        <p class="text-xs text-ink-500 text-center">Hotjar and FullStory are great for optimizing live products. PainScan is for research before you build — or understanding markets you don't own yet.</p>
       </div>
     </div>
   </section>
@@ -550,10 +684,10 @@
       </details>
       <details class="reveal reveal-delay-2 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
-          <span class="font-medium text-ink-900 text-sm">What's in the full $7 report?</span>
+          <span class="font-medium text-ink-900 text-sm">What's in the full report?</span>
           <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
-        <div class="faq-content text-sm text-ink-600">10+ ranked pain points, emotional triggers, jobs-to-be-done analysis, copywriting hooks (ready to use), competitor gaps, and suggested product/content angles.</div>
+        <div class="faq-content text-sm text-ink-600">10+ ranked pain points, emotional triggers, jobs-to-be-done analysis, copywriting hooks (ready to use), competitor gaps, and suggested product/content angles. Your first full report is free — no credit card required.</div>
       </details>
       <details class="reveal reveal-delay-3 bg-white border border-ink-200 rounded-xl overflow-hidden group">
         <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
@@ -568,6 +702,13 @@
           <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </summary>
         <div class="faq-content text-sm text-ink-600">30-day money-back guarantee, no questions asked. Email hello@painscan.fyi and you'll be refunded within 24 hours.</div>
+      </details>
+      <details class="reveal reveal-delay-1 bg-white border border-ink-200 rounded-xl overflow-hidden group mt-3">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none hover:bg-ink-50/50 transition-colors">
+          <span class="font-medium text-ink-900 text-sm">Is the free report really free?</span>
+          <svg class="w-4 h-4 text-ink-400 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </summary>
+        <div class="faq-content text-sm text-ink-600">Yes. No credit card, no signup, no catch. One free full report per browser. After that, it's $7 per report.</div>
       </details>
     </div>
   </section>
@@ -701,6 +842,73 @@
         console.error(err);
       }
     }
+
+    async function claimFreeScan() {
+      const btn = document.getElementById('free-scan-btn');
+      const status = document.getElementById('free-scan-status');
+      
+      // Check if already used free scan
+      const hasUsedFreeScan = localStorage.getItem('painscan_free_used');
+      if (hasUsedFreeScan) {
+        status.textContent = 'You\'ve already used your free report. Unlock for $7 to continue.';
+        status.classList.remove('hidden');
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+        return;
+      }
+      
+      const text = textInput.value.trim();
+      if (!text || text.length < 100) {
+        alert('Please paste at least 100 characters of text to analyze.');
+        return;
+      }
+      
+      btn.textContent = 'Generating free report...';
+      btn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/free-report', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ text }) 
+        });
+        
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to generate report');
+        }
+        
+        const data = await response.json();
+        
+        // Mark free scan as used
+        localStorage.setItem('painscan_free_used', 'true');
+        localStorage.setItem('painscan_free_used_date', new Date().toISOString());
+        
+        // Show full report
+        document.getElementById('results-section').classList.add('hidden');
+        renderFullReport(data);
+        
+      } catch (err) {
+        btn.textContent = 'Claim 1 Free Report — No Card';
+        btn.disabled = false;
+        status.textContent = err.message || 'Something went wrong. Please try again.';
+        status.classList.remove('hidden');
+        console.error(err);
+      }
+    }
+
+    // Check free scan status on page load
+    (function checkFreeScanStatus() {
+      const hasUsedFreeScan = localStorage.getItem('painscan_free_used');
+      if (hasUsedFreeScan) {
+        const btn = document.getElementById('free-scan-btn');
+        if (btn) {
+          btn.textContent = 'Free report already claimed';
+          btn.disabled = true;
+          btn.classList.add('opacity-50');
+        }
+      }
+    })();
 
     function resetTool() {
       document.getElementById('results-section').classList.add('hidden');
